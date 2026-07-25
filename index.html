@@ -789,7 +789,7 @@ async function applyConvert() {
     canvas.getContext('2d').drawImage(imgData.img, 0, 0);
     const blob = await new Promise(r => canvas.toBlob(r, mime, quality));
     const origExt = imgData.file.name.split('.').pop().toLowerCase();
-    const filename = imgData.file.name.replace(new RegExp(`\\.${origExt}$`, 'i'), `.${ext}`);
+    const filename = imgData.file.name.replace(new RegExp(`\.${origExt}$`, 'i'), `.${ext}`);
     results.push({ dataUrl: canvas.toDataURL(mime, quality), blob, size: blob.size, name: imgData.file.name, filename });
   }
   state.processedImages = results;
@@ -982,87 +982,82 @@ function applyIdphotoBg() {
   // Phase 3: Dilate person mask (shrink background) to remove edge fringes
   // This eliminates the white/colored halo at person edges after background swap
   const feather = parseInt($('#idphotoFeather').value) || 0;
-  const dilateRounds = feather > 0 ? Math.ceil(feather / 2) + 2 : 2;
-  for (let d = 0; d < dilateRounds; d++) {
-    const prev = new Uint8Array(bgMask);
-    let changed = false;
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const idx = y * w + x;
-        if (!prev[idx]) continue;  // already person, skip
-        // This is a background pixel; if any 4-neighbor is person, erode to person
-        if ((x > 0 && !prev[idx - 1]) || (x < w - 1 && !prev[idx + 1]) ||
-            (y > 0 && !prev[idx - w]) || (y < h - 1 && !prev[idx + w])) {
-          bgMask[idx] = 0; changed = true;
-        }
-      }
-    }
-    if (!changed) break;
-  }
 
-  // Phase 4: Replace background pixels with new color
-  for (let i = 0; i < w * h; i++) {
-    if (bgMask[i]) {
-      const pi = i * 4;
-      pixels[pi] = nr; pixels[pi+1] = ng; pixels[pi+2] = nb;
-    }
-  }
-
-  // Phase 5: Edge feathering — blend from person edge outward into new background
-  if (feather > 0) {
-    // Build distance map: 0=person, 1..feather=bg pixels near person edge
-    const distance = new Int16Array(w * h).fill(-1);
-    let edgeQ = [];
-
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const idx = y * w + x;
-        if (bgMask[idx]) continue;  // not background, skip
-        distance[idx] = 0;  // person pixel = distance 0
-        if ((x > 0 && bgMask[idx - 1]) || (x < w - 1 && bgMask[idx + 1]) ||
-            (y > 0 && bgMask[idx - w]) || (y < h - 1 && bgMask[idx + w])) {
-          for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
-            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-              const nidx = ny * w + nx;
-              if (bgMask[nidx] && distance[nidx] === -1) {
-                distance[nidx] = 1; edgeQ.push(nidx);
-              }
+  // Phase 3: Build distance map from person edge BEFORE any pixel modification
+  // distance: 0=person, 1..feather=background pixels near person
+  const distance = new Int16Array(w * h).fill(-1);
+  let edgeQ = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (bgMask[idx]) continue;  // background, skip for now
+      distance[idx] = 0;  // person pixel = distance 0
+      // If this person pixel borders background, mark neighbors as distance=1
+      if ((x > 0 && bgMask[idx - 1]) || (x < w - 1 && bgMask[idx + 1]) ||
+          (y > 0 && bgMask[idx - w]) || (y < h - 1 && bgMask[idx + w])) {
+        for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
+          if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+            const nidx = ny * w + nx;
+            if (bgMask[nidx] && distance[nidx] === -1) {
+              distance[nidx] = 1; edgeQ.push(nidx);
             }
           }
         }
       }
     }
-
-    // Expand distances outward
-    let qhead = 0;
-    while (qhead < edgeQ.length) {
-      const idx = edgeQ[qhead++];
-      const d = distance[idx];
-      if (d >= feather) continue;
-      const y = (idx / w) | 0, x = idx % w;
-      for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
-        if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-          const nidx = ny * w + nx;
-          if (bgMask[nidx] && distance[nidx] === -1) {
-            distance[nidx] = d + 1; edgeQ.push(nidx);
-          }
+  }
+  // Expand distances outward through background
+  let qhead = 0;
+  while (qhead < edgeQ.length) {
+    const idx = edgeQ[qhead++];
+    const d = distance[idx];
+    if (d >= feather) continue;
+    const y = (idx / w) | 0, x = idx % w;
+    for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
+      if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+        const nidx = ny * w + nx;
+        if (bgMask[nidx] && distance[nidx] === -1) {
+          distance[nidx] = d + 1; edgeQ.push(nidx);
         }
       }
     }
+  }
 
-    // Blend edge background pixels: mix original + new background
+  // Phase 4: Minimal dilate — shrink background by 1px to cover anti-alias edge
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (!bgMask[idx]) continue;  // person, skip
+      if ((x > 0 && !bgMask[idx - 1]) || (x < w - 1 && !bgMask[idx + 1]) ||
+          (y > 0 && !bgMask[idx - w]) || (y < h - 1 && !bgMask[idx + w])) {
+        bgMask[idx] = 0;  // erode this bg pixel to person
+        // For the eroded pixel, blend toward new bg rather than keeping raw old bg
+        const factor = 0.55;  // ~halfway between old bg and new bg
+        const pi = idx * 4;
+        const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
+        pixels[pi] = clamp(Math.round(pixels[pi] * (1 - factor) + nr * factor));
+        pixels[pi+1] = clamp(Math.round(pixels[pi+1] * (1 - factor) + ng * factor));
+        pixels[pi+2] = clamp(Math.round(pixels[pi+2] * (1 - factor) + nb * factor));
+      }
+    }
+  }
+
+  // Phase 5: Combined replace + feather — blend first, then solid fill the rest
+  for (let i = 0; i < w * h; i++) {
+    if (!bgMask[i]) continue;  // person pixel, skip
+    const d = distance[i];
+    const pi = i * 4;
     const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
-    for (let i = 0; i < w * h; i++) {
-      const d = distance[i];
-      if (d <= 0 || d > feather) continue;
-      // Closer to person (d=1): keep more original pixel for smooth transition
-      // Farther from person (d=feather): mostly new background
-      const t = d / (feather + 1);  // 0..1
-      const factor = Math.pow(t, 2) * 0.6;  // smooth falloff
-      const pi = i * 4;
+    if (d > 0 && d <= feather) {
+      // In feather zone: blend original background toward new background
+      const t = d / (feather + 1);
+      const factor = Math.pow(t, 2) * 0.7;
       pixels[pi] = clamp(Math.round(pixels[pi] * (1 - factor) + nr * factor));
       pixels[pi+1] = clamp(Math.round(pixels[pi+1] * (1 - factor) + ng * factor));
       pixels[pi+2] = clamp(Math.round(pixels[pi+2] * (1 - factor) + nb * factor));
+    } else {
+      // Outside feather zone: solid replace
+      pixels[pi] = nr; pixels[pi+1] = ng; pixels[pi+2] = nb;
     }
   }
 
