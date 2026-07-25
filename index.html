@@ -1753,9 +1753,9 @@ function applyIdphotoBg() {
       }
     }
   }
-  let head = 0;
-  while (head < boundaryQ.length) {
-    const idx = boundaryQ[head++];
+  let qhead = 0;
+  while (qhead < boundaryQ.length) {
+    const idx = boundaryQ[qhead++];
     const d = distance[idx];
     if (d >= MAX_DIST) continue;
     const y = (idx / w) | 0, x = idx % w;
