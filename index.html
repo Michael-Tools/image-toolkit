@@ -1593,6 +1593,7 @@ function renderIdPhoto(main) {
             </div>
           </div>
           <div class="form-group"><label>容差</label><input type="range" id="idphotoTolerance" min="5" max="100" value="40"></div>
+          <div class="form-group"><label>边缘羽化: <span id="idphotoFeatherVal">3</span></label><input type="range" id="idphotoFeather" min="0" max="10" value="3"><p style="font-size:11px;color:var(--text-secondary);margin-top:4px;">0=锐利边缘 10=柔和过渡</p></div>
           <div class="form-group"><label>新背景色</label><input type="color" id="idphotoBg" value="#ffffff" style="height:38px;padding:4px;"><div style="display:flex;gap:6px;margin-top:6px;">${['#ffffff','#438edb','#ff0000','#cccccc'].map(c => `<button class="btn btn-outline btn-sm" style="background:${c};width:24px;height:24px;padding:0;border:2px solid var(--border);" data-color="${c}"></button>`).join('')}</div></div>
           <div class="actions-bar">
             <button class="btn btn-primary" id="idphotoApply" disabled>应用背景替换</button>
@@ -1630,6 +1631,11 @@ function renderIdPhoto(main) {
   });
 
   // Background color quick picks
+  // Feather slider
+  $('#idphotoFeather').addEventListener('input', function() {
+    $('#idphotoFeatherVal').textContent = this.value;
+  });
+
   main.querySelectorAll('[data-color]').forEach(btn => btn.addEventListener('click', function() {
     $('#idphotoBg').value = this.dataset.color;
     if (state._idphotoBgColor) applyIdphotoBg();
@@ -1731,7 +1737,7 @@ function applyIdphotoBg() {
   // Distance-based edge feathering — blend outward from fill boundary by pixel distance
   const dR = nr - br, dG = ng - bg, dB = nb - bb;
   const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
-  const MAX_DIST = 4;
+  const MAX_DIST = parseInt($('#idphotoFeather').value) || 3;
   const distance = new Int8Array(w * h).fill(-1);
   let boundaryQ = [];
   for (let y = 0; y < h; y++) {
@@ -1771,7 +1777,7 @@ function applyIdphotoBg() {
   for (let i = 0; i < w * h; i++) {
     const d = distance[i];
     if (d <= 0 || d > MAX_DIST) continue;
-    const factor = Math.pow(1 - d / (MAX_DIST + 1), 2.5);
+    const factor = MAX_DIST === 0 ? 0 : Math.pow(1 - d / (MAX_DIST + 1), 1.5) * 0.45;
     const pi = i * 4;
     pixels[pi] = clamp(Math.round(pixels[pi] + factor * dR));
     pixels[pi+1] = clamp(Math.round(pixels[pi+1] + factor * dG));
