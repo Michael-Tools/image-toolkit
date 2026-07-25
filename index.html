@@ -1732,6 +1732,9 @@ function applyIdphotoBg() {
     if (y < h - 1 && !visited[idx + w]) queue.push(idx + w);
   }
 
+  // User clicked on person → invert: mark background pixels instead of person pixels
+  for (let i = 0; i < w * h; i++) { visited[i] = visited[i] === 1 ? 0 : 1; }
+
   // Edge feathering — blend boundary pixels toward new background
   // Edge decontamination — shift boundary pixels by removing old-bg tint and adding new-bg tint
   // Distance-based edge feathering — blend outward from fill boundary by pixel distance
