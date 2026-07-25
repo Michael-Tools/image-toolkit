@@ -1691,84 +1691,85 @@ function applyIdphotoBg() {
   const pixels = srcData.data;
   const w = srcCanvas.width, h = srcCanvas.height;
 
-  // Sample 4 corners → old background reference colors
+  // Sample 4 corners for old background reference
   const corners = [[0,0],[w-1,0],[0,h-1],[w-1,h-1]];
   const cornerRGB = corners.map(([cx,cy]) => { const ci = (cy*w+cx)*4; return [pixels[ci],pixels[ci+1],pixels[ci+2]]; });
   let oldR=0,oldG=0,oldB=0; cornerRGB.forEach(([cr,cg,cb])=>{oldR+=cr;oldG+=cg;oldB+=cb});
   oldR=Math.round(oldR/4); oldG=Math.round(oldG/4); oldB=Math.round(oldB/4);
-  const dR = nr - oldR, dG = ng - oldG, dB = nb - oldB;
 
-  const TOL = 40; // fixed tolerance — well-tuned for ID photo backgrounds
+  // Auto-tune tolerance: start conservative, relax if person region too small
+  const totalPx = w * h;
+  let tol = 25; // start conservative
+  let bgMask = null;
+  let bgCount = 0;
+  const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
 
   try {
 
-  // --- Phase 1: Flood fill from corners → bgMask (1=bg, 0=person) ---
-  const bgMask = new Uint8Array(w * h);
-  const fq = []; for (const [cx,cy] of corners) fq.push(cy*w+cx);
-  let fh = 0;
-  while (fh < fq.length) {
-    const idx = fq[fh++]; if (bgMask[idx]) continue;
-    const pi = idx * 4; let minD = 765;
-    for (const [cr,cg,cb] of cornerRGB) {
-      const d = (Math.abs(pixels[pi]-cr)+Math.abs(pixels[pi+1]-cg)+Math.abs(pixels[pi+2]-cb))/3;
-      if (d < minD) minD = d;
-    }
-    if (minD >= TOL) continue;
-    bgMask[idx] = 1;
-    const y = (idx/w)|0, x = idx%w;
-    if (x>0&&!bgMask[idx-1]) fq.push(idx-1);
-    if (x<w-1&&!bgMask[idx+1]) fq.push(idx+1);
-    if (y>0&&!bgMask[idx-w]) fq.push(idx-w);
-    if (y<h-1&&!bgMask[idx+w]) fq.push(idx+w);
-  }
-
-  // --- Phase 2: Signed distance from person/bg boundary ---
-  // sd < 0 = inside person, sd > 0 = inside background, sd = 0 = boundary person side
-  const TRANS = 6; // transition zone width in pixels
-  const sd = new Int16Array(w * h).fill(9999);
-  const bq = [];
-
-  // Seed: all boundary pixels (person or bg that borders the opposite type)
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x; const isBg = bgMask[idx];
-      if ((x>0&&bgMask[idx-1]!==isBg)||(x<w-1&&bgMask[idx+1]!==isBg)||(y>0&&bgMask[idx-w]!==isBg)||(y<h-1&&bgMask[idx+w]!==isBg)) {
-        sd[idx] = isBg ? 1 : 0;  // bg side = +1, person side = 0
-        bq.push(idx);
+  // Try flood fill with increasing tolerance until person region is 5-70% of image
+  for (; tol <= 60; tol += 5) {
+    bgMask = new Uint8Array(totalPx);
+    const fq = []; for (const [cx,cy] of corners) fq.push(cy*w+cx);
+    let fh = 0;
+    while (fh < fq.length) {
+      const idx = fq[fh++]; if (bgMask[idx]) continue;
+      const pi = idx * 4; let minD = 765;
+      for (const [cr,cg,cb] of cornerRGB) {
+        const d = (Math.abs(pixels[pi]-cr)+Math.abs(pixels[pi+1]-cg)+Math.abs(pixels[pi+2]-cb))/3;
+        if (d < minD) minD = d;
       }
+      if (minD >= tol) continue;
+      bgMask[idx] = 1;
+      const y = (idx/w)|0, x = idx%w;
+      if (x>0&&!bgMask[idx-1]) fq.push(idx-1);
+      if (x<w-1&&!bgMask[idx+1]) fq.push(idx+1);
+      if (y>0&&!bgMask[idx-w]) fq.push(idx-w);
+      if (y<h-1&&!bgMask[idx+w]) fq.push(idx+w);
+    }
+    // Count person pixels
+    bgCount = 0; for (let i=0;i<totalPx;i++) if (bgMask[i]) bgCount++;
+    const personPct = (totalPx - bgCount) / totalPx * 100;
+    if (personPct >= 5 && personPct <= 70) break; // good range
+    if (tol >= 60 && personPct < 5) { toast('未检测到人物区域，请确认照片背景为纯色'); return; }
+    if (personPct > 70) { toast('背景区域太小，请确认人物未占满画面'); return; }
+  }
+
+  // Dilate person by 1px to cover anti-alias edge (shrink background)
+  for (let d = 0; d < 1; d++) {
+    const prev = new Uint8Array(bgMask);
+    for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+      const idx=y*w+x; if (!prev[idx]) continue;
+      if ((x>0&&!prev[idx-1])||(x<w-1&&!prev[idx+1])||(y>0&&!prev[idx-w])||(y<h-1&&!prev[idx+w])) bgMask[idx]=0;
     }
   }
 
-  // BFS: expand distances inward/outward, staying within same type
-  let bh = 0;
-  while (bh < bq.length) {
-    const idx = bq[bh++]; const d = sd[idx]; const isBg = bgMask[idx];
-    if (Math.abs(d) >= TRANS) continue;
-    const y = (idx/w)|0, x = idx%w;
-    for (const [nx,ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
-      if (nx<0||nx>=w||ny<0||ny>=h) continue;
-      const nidx = ny*w+nx;
-      if (sd[nidx]!==9999||bgMask[nidx]!==isBg) continue;
-      sd[nidx] = isBg ? d+1 : d-1; bq.push(nidx);
-    }
+  // Replace background pixels: blend at boundary, solid fill deep in bg
+  const dR = nr - oldR, dG = ng - oldG, dB = nb - oldB;
+  // Find boundary bg pixels (adjacent to person)
+  const edgeDist = new Uint8Array(totalPx); // 0=deep bg, 1=edge bg, 2=edge-of-edge bg
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+    const idx=y*w+x; if (!bgMask[idx]) continue;
+    if ((x>0&&!bgMask[idx-1])||(x<w-1&&!bgMask[idx+1])||(y>0&&!bgMask[idx-w])||(y<h-1&&!bgMask[idx+w])) edgeDist[idx]=1;
   }
-  // Fill unvisited deep interiors
-  for (let i = 0; i < w*h; i++) if (sd[i]===9999) sd[i] = bgMask[i] ? TRANS : -TRANS;
+  // Mark 2nd-ring bg pixels
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+    const idx=y*w+x; if (!bgMask[idx]||edgeDist[idx]) continue;
+    if ((x>0&&edgeDist[idx-1])||(x<w-1&&edgeDist[idx+1])||(y>0&&edgeDist[idx-w])||(y<h-1&&edgeDist[idx+w])) edgeDist[idx]=2;
+  }
 
-  // --- Phase 3: Decontamination — shift each pixel by old→new bg delta ---
-  // alpha = person-ness (1=person, 0=bg). shift = 1-alpha = how much delta to apply.
-  // result = original + delta * (1-alpha)
-  const TWO_T = 2 * TRANS; const clamp = v => v<0 ? 0 : v>255 ? 255 : v;
-  for (let i = 0; i < w*h; i++) {
-    // alpha = smoothstep(-TRANS, TRANS, sd)
-    const t = (TRANS - sd[i]) / TWO_T;  // t: 0 (deep bg) … 1 (deep person)
-    const alpha = t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2*t);  // smoothstep
-    const shift = 1 - alpha;
-    if (shift < 0.002) continue;  // negligible
-    const pi = i * 4;
-    pixels[pi]   = clamp(Math.round(pixels[pi]   + dR * shift));
-    pixels[pi+1] = clamp(Math.round(pixels[pi+1] + dG * shift));
-    pixels[pi+2] = clamp(Math.round(pixels[pi+2] + dB * shift));
+  for (let i=0;i<totalPx;i++) {
+    if (!bgMask[i]) continue; // person, skip
+    const pi=i*4;
+    if (edgeDist[i]===1) {
+      // 1px edge: 65% toward new bg (gentle blend into person)
+      const f=0.65; pixels[pi]=clamp(Math.round(pixels[pi]+dR*f)); pixels[pi+1]=clamp(Math.round(pixels[pi+1]+dG*f)); pixels[pi+2]=clamp(Math.round(pixels[pi+2]+dB*f));
+    } else if (edgeDist[i]===2) {
+      // 2nd px: 90% toward new bg
+      const f=0.9; pixels[pi]=clamp(Math.round(pixels[pi]+dR*f)); pixels[pi+1]=clamp(Math.round(pixels[pi+1]+dG*f)); pixels[pi+2]=clamp(Math.round(pixels[pi+2]+dB*f));
+    } else {
+      // Deep bg: solid replace
+      pixels[pi]=nr; pixels[pi+1]=ng; pixels[pi+2]=nb;
+    }
   }
 
   srcCtx.putImageData(srcData, 0, 0);
