@@ -1745,29 +1745,20 @@ function applyIdphotoBg() {
 
   // Replace background pixels: blend at boundary, solid fill deep in bg
   const dR = nr - oldR, dG = ng - oldG, dB = nb - oldB;
-  // Find boundary bg pixels (adjacent to person)
-  const edgeDist = new Uint8Array(totalPx); // 0=deep bg, 1=edge bg, 2=edge-of-edge bg
+  // Mark bg pixels adjacent to person (1px edge zone)
+  const isEdge = new Uint8Array(totalPx);
   for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
     const idx=y*w+x; if (!bgMask[idx]) continue;
-    if ((x>0&&!bgMask[idx-1])||(x<w-1&&!bgMask[idx+1])||(y>0&&!bgMask[idx-w])||(y<h-1&&!bgMask[idx+w])) edgeDist[idx]=1;
-  }
-  // Mark 2nd-ring bg pixels
-  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
-    const idx=y*w+x; if (!bgMask[idx]||edgeDist[idx]) continue;
-    if ((x>0&&edgeDist[idx-1])||(x<w-1&&edgeDist[idx+1])||(y>0&&edgeDist[idx-w])||(y<h-1&&edgeDist[idx+w])) edgeDist[idx]=2;
+    if ((x>0&&!bgMask[idx-1])||(x<w-1&&!bgMask[idx+1])||(y>0&&!bgMask[idx-w])||(y<h-1&&!bgMask[idx+w])) isEdge[idx]=1;
   }
 
+  // Apply: 1px edge = 65% shift toward new bg, deep bg = solid replace
   for (let i=0;i<totalPx;i++) {
     if (!bgMask[i]) continue; // person, skip
     const pi=i*4;
-    if (edgeDist[i]===1) {
-      // 1px edge: 65% toward new bg (gentle blend into person)
+    if (isEdge[i]) {
       const f=0.65; pixels[pi]=clamp(Math.round(pixels[pi]+dR*f)); pixels[pi+1]=clamp(Math.round(pixels[pi+1]+dG*f)); pixels[pi+2]=clamp(Math.round(pixels[pi+2]+dB*f));
-    } else if (edgeDist[i]===2) {
-      // 2nd px: 90% toward new bg
-      const f=0.9; pixels[pi]=clamp(Math.round(pixels[pi]+dR*f)); pixels[pi+1]=clamp(Math.round(pixels[pi+1]+dG*f)); pixels[pi+2]=clamp(Math.round(pixels[pi+2]+dB*f));
     } else {
-      // Deep bg: solid replace
       pixels[pi]=nr; pixels[pi+1]=ng; pixels[pi+2]=nb;
     }
   }
