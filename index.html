@@ -1728,43 +1728,54 @@ function applyIdphotoBg() {
 
   // Edge feathering — blend boundary pixels toward new background
   // Edge decontamination — shift boundary pixels by removing old-bg tint and adding new-bg tint
-  const featherTol = tolerance * 3.0;
-  const dR = nr - br, dG = ng - bg, dB = nb - bb; // color delta: oldBg → newBg
+  // Distance-based edge feathering — blend outward from fill boundary by pixel distance
+  const dR = nr - br, dG = ng - bg, dB = nb - bb;
   const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
-
-  for (let pass = 0; pass < 2; pass++) {
-    const toMark = [];
-    for (let fy = 0; fy < h; fy++) {
-      for (let fx = 0; fx < w; fx++) {
-        const fidx = fy * w + fx;
-        if (visited[fidx] !== 0) continue;
-        // Check 4-connected neighbors for filled pixels
-        let hasFill = false;
-        if (fx > 0 && visited[fidx - 1] === 1) hasFill = true;
-        else if (fx < w - 1 && visited[fidx + 1] === 1) hasFill = true;
-        else if (fy > 0 && visited[fidx - w] === 1) hasFill = true;
-        else if (fy < h - 1 && visited[fidx + w] === 1) hasFill = true;
-        if (!hasFill) continue;
-
-        const fpi = fidx * 4;
-        const fdr = Math.abs(pixels[fpi] - br);
-        const fdg = Math.abs(pixels[fpi+1] - bg);
-        const fdb = Math.abs(pixels[fpi+2] - bb);
-        const fdist = (fdr + fdg + fdb) / 3;
-        if (fdist >= featherTol) continue;
-
-        // w = how much old background is in this pixel (0-1), squared for smoother falloff
-        const weight = Math.pow(1 - fdist / featherTol, 2);
-        // Shift: remove old-bg contribution, add new-bg contribution
-        pixels[fpi] = clamp(Math.round(pixels[fpi] + weight * dR));
-        pixels[fpi+1] = clamp(Math.round(pixels[fpi+1] + weight * dG));
-        pixels[fpi+2] = clamp(Math.round(pixels[fpi+2] + weight * dB));
-        toMark.push(fidx);
+  const MAX_DIST = 4;
+  const distance = new Int8Array(w * h).fill(-1);
+  let boundaryQ = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (visited[idx] === 1) {
+        distance[idx] = 0;
+        if ((x > 0 && visited[idx-1] !== 1) || (x < w-1 && visited[idx+1] !== 1) ||
+            (y > 0 && visited[idx-w] !== 1) || (y < h-1 && visited[idx+w] !== 1)) {
+          for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+              const nidx = ny * w + nx;
+              if (visited[nidx] !== 1 && distance[nidx] === -1) {
+                distance[nidx] = 1; boundaryQ.push(nidx);
+              }
+            }
+          }
+        }
       }
     }
-    // Mark processed pixels so next pass expands outward
-    toMark.forEach(idx => { visited[idx] = 1; });
-    if (!toMark.length) break;
+  }
+  let head = 0;
+  while (head < boundaryQ.length) {
+    const idx = boundaryQ[head++];
+    const d = distance[idx];
+    if (d >= MAX_DIST) continue;
+    const y = (idx / w) | 0, x = idx % w;
+    for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
+      if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+        const nidx = ny * w + nx;
+        if (distance[nidx] === -1) {
+          distance[nidx] = d + 1; boundaryQ.push(nidx);
+        }
+      }
+    }
+  }
+  for (let i = 0; i < w * h; i++) {
+    const d = distance[i];
+    if (d <= 0 || d > MAX_DIST) continue;
+    const factor = Math.pow(1 - d / (MAX_DIST + 1), 2.5);
+    const pi = i * 4;
+    pixels[pi] = clamp(Math.round(pixels[pi] + factor * dR));
+    pixels[pi+1] = clamp(Math.round(pixels[pi+1] + factor * dG));
+    pixels[pi+2] = clamp(Math.round(pixels[pi+2] + factor * dB));
   }
   srcCtx.putImageData(srcData, 0, 0);
 
