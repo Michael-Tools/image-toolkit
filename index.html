@@ -1,92 +1,363 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>图片处理工具箱</title>
 <style>
-:root { --bg: #f5f5f7; --card-bg: #ffffff; --text: #1d1d1f; --text-secondary: #86868b; --border: #e5e5ea; --primary: #007aff; --primary-hover: #0062cc; --radius: 8px; }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-header { text-align: center; padding: 40px 0 32px; }
-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-header p { font-size: 14px; color: var(--text-secondary); margin-top: 6px; }
-.tabs { display: flex; gap: 4px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
-.tab { padding: 10px 18px; border: none; background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 6px; white-space: nowrap; transition: all 0.15s; }
-.tab:hover { background: rgba(0,0,0,0.04); }
-.tab.active { background: var(--primary); color: #fff; }
-.card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); margin-bottom: 16px; }
-.dropzone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
-.dropzone:hover, .dropzone.dragover { border-color: var(--primary); background: rgba(0,122,255,0.04); }
-.dropzone p { font-size: 14px; color: var(--text-secondary); }
-.form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary); }
-input[type="range"] { width: 100%; }
-input[type="text"], input[type="number"], select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
-.btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-outline:hover { background: rgba(0,0,0,0.04); }
-.btn-sm { padding: 4px 10px; font-size: 12px; }
-.actions-bar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.preview-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.preview-card-header { font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 8px 12px; background: #fafafa; border-bottom: 1px solid var(--border); }
-.preview-card-body { padding: 12px; min-height: 120px; display: flex; align-items: center; justify-content: center; }
-.preview-card-body img { max-width: 100%; max-height: 300px; border-radius: 4px; }
-.placeholder { color: var(--text-secondary); font-size: 13px; }
-.result-count { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
-.ratio-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-.ratio-btn { padding: 4px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-size: 12px; cursor: pointer; }
-.ratio-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 1000; animation: toastIn 0.3s; }
-@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-.quality-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-.quality-badge.good { background: #e8f5e9; color: #2e7d32; }
-.quality-badge.ok { background: #fff3e0; color: #e65100; }
-.quality-badge.bad { background: #ffebee; color: #c62828; }
-@media (max-width: 640px) { .container { padding: 12px; } .form-row { grid-template-columns: 1fr; } }
+:root {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --sidebar: #0f172a;
+  --sidebar-hover: #1e293b;
+  --sidebar-active: #1e3a5f;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.04);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--sidebar);
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top:0; left:0; bottom:0;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.sidebar-logo span { color: var(--primary); }
+.sidebar-nav { flex:1; padding: 12px 0; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #94a3b8;
+  transition: all .15s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--sidebar-hover); color:#e2e8f0; }
+.nav-item.active { background: var(--sidebar-active); color:#fff; border-left-color: var(--primary); }
+.nav-item svg { width:18px; height:18px; flex-shrink:0; }
+.sidebar-footer {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  font-size: 12px;
+  color: #475569;
+}
+
+/* Main */
+.main {
+  margin-left: 220px;
+  flex:1;
+  padding: 32px;
+  max-width: 1100px;
+}
+.tool-panel { display:none; }
+.tool-panel.active { display:block; }
+
+/* Card */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border:1px solid var(--border);
+  padding: 24px;
+}
+.card+.card { margin-top:16px; }
+
+/* Upload zone */
+.drop-zone {
+  border:2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition: all .2s;
+  background: #f8fafc;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--primary);
+  background: #eff6ff;
+}
+.drop-zone svg { width:40px; height:40px; color:var(--text-secondary); margin-bottom:12px; }
+.drop-zone p { color: var(--text-secondary); font-size:14px; }
+.drop-zone .file-types { font-size:12px; color:#94a3b8; margin-top:4px; }
+
+/* Form controls */
+label { display:block; font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; }
+input[type="text"],
+input[type="number"],
+input[type="color"],
+select {
+  width:100%;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-size:14px;
+  font-family:inherit;
+  color:var(--text);
+  background:#fff;
+  transition: border-color .15s;
+}
+input:focus, select:focus { outline:none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+input[type="range"] { width:100%; accent-color:var(--primary); }
+
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px;
+  border:none; border-radius:6px;
+  font-size:13px; font-weight:600; font-family:inherit;
+  cursor:pointer;
+  transition: all .15s;
+}
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary-hover); }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { background:#f1f5f9; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { opacity:.9; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.btn-sm { padding:5px 10px; font-size:12px; }
+
+/* Grid */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.form-group { margin-bottom:14px; }
+.form-group:last-child { margin-bottom:0; }
+
+/* Preview */
+.preview-area { display:flex; gap:16px; flex-wrap:wrap; }
+.preview-card {
+  flex:1; min-width:200px;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  background:#f8fafc;
+}
+.preview-card-header {
+  padding:8px 12px;
+  font-size:12px; font-weight:600;
+  border-bottom:1px solid var(--border);
+  background:#fff;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.preview-card-body {
+  display:flex; align-items:center; justify-content:center;
+  min-height:180px;
+  padding:12px;
+}
+.preview-card-body img { max-width:100%; max-height:300px; object-fit:contain; }
+.preview-card-body .placeholder { color:var(--text-secondary); font-size:13px; }
+
+/* Actions bar */
+.actions-bar {
+  display:flex; gap:8px; align-items:center;
+  padding-top:16px;
+}
+
+/* Toast */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:#1e293b; color:#fff;
+  padding:12px 20px; border-radius:8px;
+  font-size:13px; font-weight:500;
+  box-shadow:var(--shadow-lg);
+  z-index:1000;
+  animation: slideUp .3s ease;
+  display:none;
+}
+.toast.show { display:block; }
+@keyframes slideUp { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+/* Collage grid */
+.collage-grid { display:grid; gap:4px; }
+.collage-grid .cell {
+  background:#f1f5f9;
+  border:2px dashed var(--border);
+  border-radius:4px;
+  min-height:120px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:all .15s;
+  overflow:hidden;
+  position:relative;
+}
+.collage-grid .cell:hover { border-color:var(--primary); background:#eff6ff; }
+.collage-grid .cell img { width:100%; height:100%; object-fit:cover; position:absolute; top:0;left:0; }
+.collage-grid .cell .cell-label { color:var(--text-secondary); font-size:12px; z-index:1; }
+
+/* Batch list */
+.batch-list { max-height:300px; overflow-y:auto; }
+.batch-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+.batch-item:last-child { border-bottom:none; }
+.batch-item img { width:48px; height:48px; object-fit:cover; border-radius:4px; }
+.batch-item .info { flex:1; min-width:0; }
+.batch-item .info .name { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.batch-item .info .size { font-size:11px; color:var(--text-secondary); }
+
+/* Size comparison bar */
+.size-bar { display:flex; height:8px; border-radius:4px; overflow:hidden; background:#e2e8f0; margin-top:8px; }
+.size-bar .original { background:var(--text-secondary); transition:flex .3s; }
+.size-bar .compressed { background:var(--success); transition:flex .3s; }
+.size-info { display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-top:4px; }
+
+/* Responsive */
+@media (max-width:768px) {
+  .sidebar { width:60px; }
+  .sidebar-logo { font-size:0; padding:24px 0; text-align:center; }
+  .sidebar-logo::after { content:'工具箱'; font-size:14px; font-weight:700; }
+  .nav-item { padding:12px; justify-content:center; }
+  .nav-item span:not(.nav-icon) { display:none; }
+  .nav-item svg { width:20px; height:20px; }
+  .sidebar-footer { display:none; }
+  .main { margin-left:60px; padding:16px; }
+  .form-row, .form-row-3 { grid-template-columns:1fr; }
+}
+
+/* Watermark position indicator */
+.position-options {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
+  max-width:180px;
+}
+.pos-btn {
+  padding:8px 4px;
+  font-size:11px;
+  border:1px solid var(--border);
+  border-radius:4px;
+  background:#fff;
+  cursor:pointer;
+  text-align:center;
+  transition:all .15s;
+}
+.pos-btn:hover { border-color:var(--primary); }
+.pos-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+/* Remove watermark brush area */
+.brush-canvas { border:1px solid var(--border); border-radius:var(--radius); cursor:crosshair; max-width:100%; }
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>图片处理工具箱</h1>
-    <p>本地处理 | 隐私安全 | 8大实用功能</p>
-  </header>
-  <div class="tabs" id="tabs"></div>
-  <main id="main"></main>
-</div>
-<div id="toastContainer"></div>
-<script>
-// ========== STATE ==========
-const state = { images: [], processedImages: [], watermarkImg: null, watermarkBatchImg: null };
 
-// ========== UTILS ==========
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">图片<span>工具箱</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-tool="watermark-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+      <span>添加水印</span>
+    </div>
+    <div class="nav-item" data-tool="watermark-remove">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+      <span>去除水印</span>
+    </div>
+    <div class="nav-item" data-tool="compress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>图片压缩</span>
+    </div>
+    <div class="nav-item" data-tool="resize">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      <span>修改尺寸</span>
+    </div>
+    <div class="nav-item" data-tool="collage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>图片拼图</span>
+    </div>
+    <div class="nav-item" data-tool="convert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>格式转换</span>
+    </div>
+    <div class="nav-item" data-tool="idphoto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/></svg>
+      <span>证件照</span>
+    </div>
+    <div class="nav-item" data-tool="exif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>图片信息</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">所有处理在本地完成，不上传服务器</div>
+</aside>
+
+<!-- Main Content -->
+<main class="main" id="mainContent"></main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== State =====
+const state = {
+  currentTool: 'watermark-add',
+  images: [],        // [{file, dataUrl, width, height}]
+  processedImages: [], // [{dataUrl, blob, size}]
+  watermarkText: '',
+  watermarkImage: null,
+  watermarkOpacity: 0.5,
+  watermarkPosition: 'center',
+  watermarkSize: 40,
+  watermarkColor: '#000000',
+  watermarkTile: false,
+  removeMode: 'blur', // blur | crop | fill
+  removeBrushSize: 30,
+  compressQuality: 80,
+  compressFormat: 'image/jpeg',
+  resizeWidth: 800,
+  resizeHeight: 600,
+  resizeKeepRatio: true,
+  collageLayout: '2x2',
+  collageSpacing: 4,
+  collageBg: '#ffffff',
+  collageImages: [],
+  batchMode: false,
+};
+
+// ===== Utils =====
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
 
 function toast(msg) {
-  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
-  $('#toastContainer').appendChild(t);
-  setTimeout(() => t.remove(), 2500);
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function createDropZone(accept, multiple, handler) {
-  const dz = document.createElement('div'); dz.className = 'dropzone';
-  const input = document.createElement('input'); input.type = 'file'; input.accept = accept;
-  input.multiple = !!multiple; input.style.display = 'none';
-  dz.appendChild(input);
-  dz.innerHTML += '<p>点击或拖拽上传图片</p>';
-  dz.addEventListener('click', () => input.click());
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handler(e.dataTransfer.files); });
-  input.addEventListener('change', () => { handler(input.files); dz.classList.remove('dragover'); });
-  return dz;
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(2) + ' MB';
 }
 
 function loadImage(file) {
@@ -94,728 +365,1214 @@ function loadImage(file) {
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
-      img.onload = () => resolve({ file, img, width: img.naturalWidth, height: img.naturalHeight, dataUrl: e.target.result });
-      img.onerror = () => reject(new Error('Image load failed'));
+      img.onload = () => resolve({ file, dataUrl: e.target.result, img, width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = reject;
       img.src = e.target.result;
     };
-    reader.onerror = () => reject(new Error('File read failed'));
+    reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
 
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1048576).toFixed(1) + ' MB';
+function canvasToBlob(canvas, format, quality) {
+  return new Promise(resolve => {
+    canvas.toBlob(blob => resolve(blob), format || 'image/jpeg', quality || 0.9);
+  });
 }
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
   URL.revokeObjectURL(url);
 }
 
-// ========== TOOLS ==========
-const TOOLS = [
-  { id: 'watermark', name: '加水印', icon: '💧' },
-  { id: 'watermark-batch', name: '批量加水印', icon: '📦' },
-  { id: 'watermark-remove', name: '去水印', icon: '🧹' },
-  { id: 'compress', name: '图片压缩', icon: '📉' },
-  { id: 'resize', name: '改尺寸', icon: '📐' },
-  { id: 'collage', name: '拼图', icon: '🧩' },
-  { id: 'convert', name: '格式转换', icon: '🔄' },
-  { id: 'idphoto', name: '证件照', icon: '📸' },
-  { id: 'exif', name: 'EXIF查看', icon: 'ℹ️' },
-];
-
-function renderTabs() {
-  const tabs = $('#tabs');
-  TOOLS.forEach((t, i) => {
-    const btn = document.createElement('button'); btn.className = 'tab' + (i === 0 ? ' active' : '');
-    btn.textContent = t.icon + ' ' + t.name; btn.dataset.id = t.id;
-    btn.addEventListener('click', () => {
-      $$('.tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderTool(t.id);
-    });
-    tabs.appendChild(btn);
+function downloadAll(images, prefix) {
+  images.forEach((item, i) => {
+    setTimeout(() => downloadBlob(item.blob, `${prefix}_${i+1}.${item.ext || 'jpg'}`), i * 200);
   });
+  toast(`开始下载 ${images.length} 张图片`);
 }
 
-function renderTool(id) {
-  const main = $('#main');
+// ===== File Input Factory =====
+function createDropZone(accept, multiple, onChange) {
+  const div = document.createElement('div');
+  div.className = 'drop-zone';
+  div.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <p>拖拽图片到此处，或点击上传</p>
+    <p class="file-types">支持 JPG、PNG、WebP、BMP${multiple ? '，可批量上传' : ''}</p>
+  `;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = accept || 'image/*';
+  if (multiple) input.multiple = true;
+  input.style.display = 'none';
+  div.appendChild(input);
+
+  div.addEventListener('click', () => input.click());
+  div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('dragover'); });
+  div.addEventListener('dragleave', () => div.classList.remove('dragover'));
+  div.addEventListener('drop', e => {
+    e.preventDefault();
+    div.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length) onChange(files);
+  });
+  input.addEventListener('change', () => {
+    const files = Array.from(input.files);
+    if (files.length) onChange(files);
+  });
+  return div;
+}
+
+// ===== Navigation =====
+$$('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    $$('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    state.currentTool = item.dataset.tool;
+    renderTool();
+  });
+});
+
+// ===== Tool Rendering =====
+function renderTool() {
+  const main = $('#mainContent');
   main.innerHTML = '';
-  state.images = []; state.processedImages = [];
-  state.watermarkImg = null; state.watermarkBatchImg = null;
-  state._idphotoBgColor = null; state._idphotoOrigCanvas = null;
-  state._idphotoClickPos = null;
-  switch (id) {
-    case 'watermark': renderWatermark(main); break;
-    case 'watermark-batch': renderWatermarkBatch(main); break;
+  switch(state.currentTool) {
+    case 'watermark-add': renderWatermarkAdd(main); break;
     case 'watermark-remove': renderWatermarkRemove(main); break;
     case 'compress': renderCompress(main); break;
     case 'resize': renderResize(main); break;
     case 'collage': renderCollage(main); break;
-    case 'convert': renderConvert(main); break;
-    case 'idphoto': renderIdphoto(main); break;
+    case 'convert': renderFormatConvert(main); break;
+    case 'idphoto': renderIdPhoto(main); break;
     case 'exif': renderExif(main); break;
   }
 }
 
-// ========== WATERMARK ==========
-function renderWatermark(main) {
+// ========== WATERMARK ADD ==========
+function renderWatermarkAdd(main) {
   main.innerHTML = `
     <div class="card">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">图片加水印</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">为单张图片添加文字或图片水印，支持位置、透明度、大小调整。</p>
-      <div id="wmOrigDrop"></div>
-      <div class="form-group" style="margin-top:12px;"><label>水印类型</label><select id="wmType"><option value="text">文字水印</option><option value="image">图片水印</option></select></div>
-      <div id="wmTextOpts">
-        <div class="form-group"><label>水印文字</label><input type="text" id="wmText" value="水印文字"></div>
-        <div class="form-group"><label>字体大小</label><input type="range" id="wmSize" min="12" max="120" value="36"></div>
-        <div class="form-group"><label>字体颜色</label><input type="color" id="wmColor" value="#ffffff"></div>
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">添加水印</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div id="wmAddDrop"></div>
+          <div class="actions-bar" style="margin-top:12px;">
+            <button class="btn btn-outline btn-sm" id="wmAddClear">清空</button>
+          </div>
+        </div>
+        <div>
+          <div class="form-group">
+            <label>水印类型</label>
+            <select id="wmType">
+              <option value="text">文字水印</option>
+              <option value="image">图片水印</option>
+            </select>
+          </div>
+          <div id="wmTextSettings">
+            <div class="form-group"><label>文字内容</label><input type="text" id="wmText" value="Sample Watermark" placeholder="输入水印文字"></div>
+            <div class="form-row">
+              <div class="form-group"><label>字体大小</label><input type="number" id="wmSize" value="40" min="8" max="200"></div>
+              <div class="form-group"><label>颜色</label><input type="color" id="wmColor" value="#000000" style="height:38px;padding:4px;"></div>
+            </div>
+          </div>
+          <div id="wmImageSettings" style="display:none;">
+            <div class="form-group"><label>水印图片</label><input type="file" id="wmImageFile" accept="image/*"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>透明度</label><input type="range" id="wmOpacity" min="0" max="100" value="50"><span style="font-size:12px;color:var(--text-secondary);" id="wmOpacityVal">50%</span></div>
+          </div>
+          <div class="form-group"><label>位置</label>
+            <div class="position-options">
+              <button class="pos-btn" data-pos="top-left">左上</button>
+              <button class="pos-btn" data-pos="top">上中</button>
+              <button class="pos-btn" data-pos="top-right">右上</button>
+              <button class="pos-btn" data-pos="left">左中</button>
+              <button class="pos-btn active" data-pos="center">居中</button>
+              <button class="pos-btn" data-pos="right">右中</button>
+              <button class="pos-btn" data-pos="bottom-left">左下</button>
+              <button class="pos-btn" data-pos="bottom">下中</button>
+              <button class="pos-btn" data-pos="bottom-right">右下</button>
+            </div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="wmTile" style="width:auto;">
+            <label style="margin:0;">平铺水印（满屏重复）</label>
+          </div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" id="wmApply">应用水印</button>
+            <button class="btn btn-outline" id="wmDownload" disabled>下载</button>
+            <button class="btn btn-outline btn-sm" id="wmBatch">批量处理</button>
+          </div>
+        </div>
       </div>
-      <div id="wmImageOpts" style="display:none;">
-        <div id="wmImgDrop"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>透明度</label><input type="range" id="wmOpacity" min="0.1" max="1" step="0.05" value="0.5"></div>
-        <div class="form-group"><label>旋转角度</label><input type="range" id="wmRotate" min="-45" max="45" value="0"></div>
-      </div>
-      <div class="form-group"><label>位置</label><select id="wmPos"><option value="center">居中</option><option value="topleft">左上</option><option value="topright">右上</option><option value="bottomleft">左下</option><option value="bottomright">右下</option><option value="tile">平铺</option></select></div>
-      <div class="actions-bar">
-        <button class="btn btn-primary" id="wmApply" disabled>应用水印</button>
-        <button class="btn btn-outline" id="wmDownload" disabled>下载</button>
-      </div>
-      <div style="margin-top:16px;" id="wmPreview"></div>
-    </div>`;
-  const dropContainer = $('#wmOrigDrop');
-  dropContainer.appendChild(createDropZone('image/*', false, files => {
-    if (!files.length) return; state.images = []; state.processedImages = [];
-    loadImage(files[0]).then(data => { state.images.push(data); $('#wmApply').disabled = false; });
-  }));
+      <div class="preview-area" style="margin-top:16px;" id="wmPreview"></div>
+    </div>
+  `;
+
+  // Setup drop zone
+  const dropContainer = $('#wmAddDrop');
+  dropContainer.appendChild(createDropZone('image/*', true, handleWmAddFiles));
+
+  // Toggle watermark type
   $('#wmType').addEventListener('change', function() {
-    $('#wmTextOpts').style.display = this.value === 'text' ? '' : 'none';
-    $('#wmImageOpts').style.display = this.value === 'image' ? '' : 'none';
+    $('#wmTextSettings').style.display = this.value === 'text' ? 'block' : 'none';
+    $('#wmImageSettings').style.display = this.value === 'image' ? 'block' : 'none';
   });
-  const wmImgDrop = $('#wmImgDrop');
-  wmImgDrop.appendChild(createDropZone('image/*', false, files => {
-    if (!files.length) return;
-    loadImage(files[0]).then(data => { state.watermarkImg = data; toast('水印图片已加载'); });
-  }));
-  $('#wmApply').addEventListener('click', () => applyWatermark());
+
+  // Opacity
+  $('#wmOpacity').addEventListener('input', function() {
+    $('#wmOpacityVal').textContent = this.value + '%';
+  });
+
+  // Position buttons
+  $$('#wmAddDrop').forEach(() => {}); // noop, handle below
+  main.querySelectorAll('.pos-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      main.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      state.watermarkPosition = this.dataset.pos;
+    });
+  });
+
+  // Tile
+  $('#wmTile').addEventListener('change', function() {
+    state.watermarkTile = this.checked;
+  });
+
+  // Watermark image
+  $('#wmImageFile').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { state.watermarkImage = e.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  // Clear
+  $('#wmAddClear').addEventListener('click', () => {
+    state.images = [];
+    state.processedImages = [];
+    $('#wmDownload').disabled = true;
+    $('#wmPreview').innerHTML = '';
+    dropContainer.innerHTML = '';
+    dropContainer.appendChild(createDropZone('image/*', true, handleWmAddFiles));
+  });
+
+  // Apply watermark
+  $('#wmApply').addEventListener('click', applyWatermark);
+
+  // Download
   $('#wmDownload').addEventListener('click', () => {
-    if (state.processedImages.length) downloadBlob(state.processedImages[0].blob, 'watermarked.jpg');
+    if (state.processedImages.length === 1) {
+      downloadBlob(state.processedImages[0].blob, 'watermarked.jpg');
+    } else {
+      downloadAll(state.processedImages, 'watermarked');
+    }
+  });
+
+  // Batch
+  $('#wmBatch').addEventListener('click', () => {
+    if (state.images.length < 2) { toast('请先上传多张图片'); return; }
+    applyWatermarkBatch();
+  });
+}
+
+async function handleWmAddFiles(files) {
+  state.images = [];
+  state.processedImages = [];
+  $('#wmDownload').disabled = true;
+  $('#wmPreview').innerHTML = '';
+
+  for (const file of files) {
+    const imgData = await loadImage(file);
+    state.images.push(imgData);
+  }
+
+  // Show preview
+  const preview = $('#wmPreview');
+  state.images.forEach((img, i) => {
+    const card = document.createElement('div');
+    card.className = 'preview-card';
+    card.innerHTML = `
+      <div class="preview-card-header"><span>原图 ${i+1}</span><span style="color:var(--text-secondary);">${img.width}x${img.height}</span></div>
+      <div class="preview-card-body"><img src="${img.dataUrl}" alt=""></div>
+    `;
+    preview.appendChild(card);
   });
 }
 
 async function applyWatermark() {
-  if (!state.images.length) return;
-  const img = state.images[0];
-  const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img.img, 0, 0);
-  const wmType = $('#wmType').value;
-  const opacity = parseFloat($('#wmOpacity').value);
-  const pos = $('#wmPos').value;
-  const rotate = parseInt($('#wmRotate').value) * Math.PI / 180;
-  ctx.globalAlpha = opacity;
+  if (!state.images.length) { toast('请先上传图片'); return; }
+  const type = $('#wmType').value;
 
-  if (wmType === 'text') {
-    const text = $('#wmText').value || 'Watermark';
-    const fontSize = parseInt($('#wmSize').value);
-    const color = $('#wmColor').value;
-    ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
-    ctx.fillStyle = color;
-    const metrics = ctx.measureText(text);
-    const tw = metrics.width, th = fontSize;
+  state.processedImages = [];
+  for (const imgData of state.images) {
+    const canvas = document.createElement('canvas');
+    canvas.width = imgData.width;
+    canvas.height = imgData.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgData.img, 0, 0);
 
-    const positions = {
-      center: [img.width/2 - tw/2, img.height/2],
-      topleft: [20, th + 20],
-      topright: [img.width - tw - 20, th + 20],
-      bottomleft: [20, img.height - 20],
-      bottomright: [img.width - tw - 20, img.height - 20],
-    };
+    const opacity = parseInt($('#wmOpacity').value) / 100;
+    ctx.globalAlpha = opacity;
 
-    if (pos === 'tile') {
-      for (let y = 0; y < img.height; y += th * 2) {
-        for (let x = 0; x < img.width; x += tw * 2) {
-          ctx.save(); ctx.translate(x + tw/2, y + th/2);
-          if (rotate) ctx.rotate(rotate);
-          ctx.fillText(text, -tw/2, th/2); ctx.restore();
+    if (type === 'text') {
+      const text = $('#wmText').value || 'Watermark';
+      const fontSize = parseInt($('#wmSize').value) || 40;
+      const color = $('#wmColor').value;
+      const tile = $('#wmTile').checked;
+
+      ctx.fillStyle = color;
+      ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
+      const metrics = ctx.measureText(text);
+      const tw = metrics.width;
+      const th = fontSize;
+
+      if (tile) {
+        const spacing = Math.max(tw, th) * 2.5;
+        for (let y = th; y < canvas.height + th; y += spacing) {
+          for (let x = 0; x < canvas.width + tw; x += spacing) {
+            ctx.fillText(text, x, y);
+          }
         }
+      } else {
+        const pos = getPosition(canvas.width, canvas.height, tw, th, state.watermarkPosition);
+        ctx.fillText(text, pos.x, pos.y);
       }
-    } else {
-      const [px, py] = positions[pos];
-      ctx.save(); ctx.translate(px + tw/2, py);
-      if (rotate) ctx.rotate(rotate);
-      ctx.fillText(text, -tw/2, 0); ctx.restore();
-    }
-  } else if (state.watermarkImg) {
-    const wmImg = state.watermarkImg.img;
-    const wmW = Math.min(wmImg.width, img.width * 0.3);
-    const wmH = wmImg.height * (wmW / wmImg.width);
-    const positions = {
-      center: [img.width/2 - wmW/2, img.height/2 - wmH/2],
-      topleft: [20, 20],
-      topright: [img.width - wmW - 20, 20],
-      bottomleft: [20, img.height - wmH - 20],
-      bottomright: [img.width - wmW - 20, img.height - wmH - 20],
-    };
-    if (pos === 'tile') {
-      for (let y = 0; y < img.height; y += wmH * 1.5) {
-        for (let x = 0; x < img.width; x += wmW * 1.5) {
-          ctx.save(); ctx.translate(x + wmW/2, y + wmH/2);
-          if (rotate) ctx.rotate(rotate);
-          ctx.drawImage(wmImg, -wmW/2, -wmH/2, wmW, wmH); ctx.restore();
+    } else if (type === 'image' && state.watermarkImage) {
+      const wmImg = new Image();
+      await new Promise(resolve => { wmImg.onload = resolve; wmImg.src = state.watermarkImage; });
+
+      const tile = $('#wmTile').checked;
+      const maxW = canvas.width * 0.4;
+      const maxH = canvas.height * 0.4;
+      let ww = wmImg.width, wh = wmImg.height;
+      if (ww > maxW) { wh = wh * (maxW / ww); ww = maxW; }
+      if (wh > maxH) { ww = ww * (maxH / wh); wh = maxH; }
+
+      if (tile) {
+        const spacing = Math.max(ww, wh) * 2;
+        for (let y = 0; y < canvas.height; y += spacing) {
+          for (let x = 0; x < canvas.width; x += spacing) {
+            ctx.drawImage(wmImg, x, y, ww, wh);
+          }
         }
+      } else {
+        const pos = getPosition(canvas.width, canvas.height, ww, wh, state.watermarkPosition);
+        ctx.drawImage(wmImg, pos.x, pos.y, ww, wh);
       }
-    } else {
-      const [px, py] = positions[pos];
-      ctx.save(); ctx.translate(px + wmW/2, py + wmH/2);
-      if (rotate) ctx.rotate(rotate);
-      ctx.drawImage(wmImg, -wmW/2, -wmH/2, wmW, wmH); ctx.restore();
     }
+
+    ctx.globalAlpha = 1;
+    const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    state.processedImages.push({ dataUrl, blob, size: blob.size });
   }
 
-  canvas.toBlob(blob => {
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    state.processedImages = [{ dataUrl, blob, size: blob.size }];
-    $('#wmDownload').disabled = false;
-    const prev = $('#wmPreview'); prev.innerHTML = `<img src="${dataUrl}" style="max-width:100%;max-height:400px;"><p style="font-size:12px;margin-top:6px;color:var(--text-secondary);">${formatSize(blob.size)}</p>`;
-  }, 'image/jpeg', 0.92);
-}
-
-// ========== BATCH WATERMARK ==========
-function renderWatermarkBatch(main) {
-  main.innerHTML = `
-    <div class="card">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">批量加水印</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">支持 WebP / PNG / JPEG 格式，一次批量处理多张。</p>
-      <div id="wmBatchDrop"></div>
-      <div class="form-group" style="margin-top:12px;"><label>水印类型</label><select id="wmBatchType"><option value="text">文字水印</option><option value="image">图片水印</option></select></div>
-      <div id="wmBatchTextOpts">
-        <div class="form-group"><label>水印文字</label><input type="text" id="wmBatchText" value="水印文字"></div>
-        <div class="form-group"><label>字体大小</label><input type="range" id="wmBatchSize" min="12" max="120" value="36"></div>
-        <div class="form-group"><label>字体颜色</label><input type="color" id="wmBatchColor" value="#ffffff"></div>
-      </div>
-      <div id="wmBatchImageOpts" style="display:none;"><div id="wmBatchImgDrop"></div></div>
-      <div class="form-row">
-        <div class="form-group"><label>透明度</label><input type="range" id="wmBatchOpacity" min="0.1" max="1" step="0.05" value="0.5"></div>
-        <div class="form-group"><label>旋转角度</label><input type="range" id="wmBatchRotate" min="-45" max="45" value="0"></div>
-      </div>
-      <div class="form-group"><label>位置</label><select id="wmBatchPos"><option value="center">居中</option><option value="topleft">左上</option><option value="topright">右上</option><option value="bottomleft">左下</option><option value="bottomright">右下</option><option value="tile">平铺</option></select></div>
-      <div class="actions-bar">
-        <button class="btn btn-primary" id="wmBatchApply" disabled>批量处理</button>
-        <button class="btn btn-outline" id="wmBatchDownload" disabled>全部下载 (ZIP)</button>
-      </div>
-      <div style="margin-top:16px;" id="wmBatchPreview"></div>
-    </div>`;
-  const dropContainer = $('#wmBatchDrop');
-  dropContainer.appendChild(createDropZone('image/*', true, files => {
-    if (!files.length) return; state.images = []; state.processedImages = [];
-    Promise.all([...files].map(f => loadImage(f))).then(data => {
-      state.images = data; $('#wmBatchApply').disabled = false;
-      toast(`已加载 ${data.length} 张图片`);
-    });
-  }));
-  $('#wmBatchType').addEventListener('change', function() {
-    $('#wmBatchTextOpts').style.display = this.value === 'text' ? '' : 'none';
-    $('#wmBatchImageOpts').style.display = this.value === 'image' ? '' : 'none';
-  });
-  const wmImgDrop = $('#wmBatchImgDrop');
-  wmImgDrop.appendChild(createDropZone('image/*', false, files => {
-    if (!files.length) return;
-    loadImage(files[0]).then(data => { state.watermarkBatchImg = data; toast('水印图片已加载'); });
-  }));
-  $('#wmBatchApply').addEventListener('click', () => applyWatermarkBatch());
-  $('#wmBatchDownload').addEventListener('click', () => {
-    if (!state.processedImages.length) return;
-    downloadBlob(state.processedImages[0].blob, state.processedImages.length > 1 ? 'batch.zip' : 'batch_0.jpg');
-  });
+  // Show result preview
+  showProcessedPreview('wmPreview', state.images, state.processedImages);
+  $('#wmDownload').disabled = false;
+  toast(`已处理 ${state.processedImages.length} 张图片`);
 }
 
 async function applyWatermarkBatch() {
-  if (!state.images.length) return;
-  const wmType = $('#wmBatchType').value;
-  const opacity = parseFloat($('#wmBatchOpacity').value);
-  const pos = $('#wmBatchPos').value;
-  const rotate = parseInt($('#wmBatchRotate').value) * Math.PI / 180;
-  const text = $('#wmBatchText').value || 'Watermark';
-  const fontSize = parseInt($('#wmBatchSize').value);
-  const color = $('#wmBatchColor').value;
-  const results = [];
-  const prev = $('#wmBatchPreview'); prev.innerHTML = '<p style="font-size:13px;">处理中...</p>';
-
-  for (const imgData of state.images) {
-    const canvas = document.createElement('canvas'); canvas.width = imgData.width; canvas.height = imgData.height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imgData.img, 0, 0);
-    ctx.globalAlpha = opacity;
-
-    if (wmType === 'text') {
-      ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
-      ctx.fillStyle = color;
-      const metrics = ctx.measureText(text);
-      const tw = metrics.width, th = fontSize;
-      const positions = {
-        center: [imgData.width/2 - tw/2, imgData.height/2],
-        topleft: [20, th + 20], topright: [imgData.width - tw - 20, th + 20],
-        bottomleft: [20, imgData.height - 20], bottomright: [imgData.width - tw - 20, imgData.height - 20],
-      };
-      if (pos === 'tile') {
-        for (let y = 0; y < imgData.height; y += th * 2)
-          for (let x = 0; x < imgData.width; x += tw * 2) {
-            ctx.save(); ctx.translate(x + tw/2, y + th/2);
-            if (rotate) ctx.rotate(rotate);
-            ctx.fillText(text, -tw/2, th/2); ctx.restore();
-          }
-      } else {
-        const [px, py] = positions[pos];
-        ctx.save(); ctx.translate(px + tw/2, py);
-        if (rotate) ctx.rotate(rotate);
-        ctx.fillText(text, -tw/2, 0); ctx.restore();
-      }
-    }
-    ctx.globalAlpha = 1;
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-    results.push({ dataUrl: canvas.toDataURL('image/jpeg', 0.92), blob, size: blob.size });
+  await applyWatermark();
+  if (state.processedImages.length > 1) {
+    downloadAll(state.processedImages, 'watermarked');
   }
-  state.processedImages = results;
-  $('#wmBatchDownload').disabled = false;
-  prev.innerHTML = `<p class="result-count">已处理 ${results.length} 张</p>` + results.map((r, i) =>
-    `<div style="margin-bottom:8px;"><img src="${r.dataUrl}" style="max-width:100%;max-height:200px;"><p style="font-size:11px;color:var(--text-secondary);">${state.images[i].file.name} → ${formatSize(r.size)}</p></div>`
-  ).join('');
+}
+
+function getPosition(cw, ch, tw, th, pos) {
+  const pad = 20;
+  switch(pos) {
+    case 'top-left': return { x: pad, y: th + pad };
+    case 'top': return { x: (cw - tw) / 2, y: th + pad };
+    case 'top-right': return { x: cw - tw - pad, y: th + pad };
+    case 'left': return { x: pad, y: ch / 2 };
+    case 'center': return { x: (cw - tw) / 2, y: ch / 2 };
+    case 'right': return { x: cw - tw - pad, y: ch / 2 };
+    case 'bottom-left': return { x: pad, y: ch - pad };
+    case 'bottom': return { x: (cw - tw) / 2, y: ch - pad };
+    case 'bottom-right': return { x: cw - tw - pad, y: ch - pad };
+    default: return { x: (cw - tw) / 2, y: ch / 2 };
+  }
+}
+
+function showProcessedPreview(containerId, originals, processed) {
+  const preview = $('#' + containerId);
+  // Remove existing result cards
+  preview.querySelectorAll('.preview-card.result').forEach(c => c.remove());
+
+  processed.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'preview-card result';
+    const origSize = originals[i]?.file?.size || 0;
+    const reduction = origSize ? ((1 - p.size / origSize) * 100).toFixed(0) : 0;
+    card.innerHTML = `
+      <div class="preview-card-header"><span>结果 ${i+1}</span><span style="color:var(--success);">${formatSize(p.size)}</span></div>
+      <div class="preview-card-body"><img src="${p.dataUrl}" alt=""></div>
+    `;
+    preview.appendChild(card);
+  });
 }
 
 // ========== WATERMARK REMOVE ==========
 function renderWatermarkRemove(main) {
+  state.images = [];
+  state.processedImages = [];
   main.innerHTML = `
     <div class="card">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">图片去水印</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">在预览图上点击水印位置，系统自动识别并消除。适合纯色/简单背景的水印。</p>
-      <div id="wmRemoveDrop"></div>
-      <div class="form-row" style="margin-top:12px;">
-        <div class="form-group"><label>画笔大小</label><input type="range" id="wmRemoveSize" min="5" max="50" value="20"></div>
-        <div class="form-group"><label>平滑度</label><input type="range" id="wmRemoveSmooth" min="5" max="50" value="15"></div>
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">去除水印</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">支持三种方式：模糊覆盖 / 颜色填充 / 边缘裁剪。复杂水印建议用裁剪。</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div id="wmRemoveDrop"></div>
+          <div class="actions-bar" style="margin-top:12px;">
+            <button class="btn btn-outline btn-sm" id="wmRemoveClear">清空</button>
+            <button class="btn btn-outline btn-sm" id="wmRemoveReset" disabled>还原</button>
+          </div>
+          <div style="margin-top:16px;">
+            <label>去除方式</label>
+            <select id="removeMode">
+              <option value="blur">模糊覆盖（推荐）</option>
+              <option value="fill">颜色填充</option>
+              <option value="crop">边缘裁剪</option>
+            </select>
+          </div>
+          <div class="form-row" style="margin-top:12px;" id="blurSettings">
+            <div class="form-group"><label>模糊强度</label><input type="range" id="blurStrength" min="5" max="50" value="20"></div>
+            <div class="form-group"><label>画笔大小</label><input type="range" id="brushSize" min="10" max="100" value="30"></div>
+          </div>
+          <div class="form-group" style="margin-top:12px;display:none;" id="fillSettings">
+            <label>填充颜色</label><input type="color" id="fillColor" value="#ffffff">
+          </div>
+          <div class="form-group" style="margin-top:12px;display:none;" id="cropSettings">
+            <label>裁剪边距（像素）</label>
+            <div class="form-row">
+              <div><label style="font-size:11px;">上</label><input type="number" id="cropTop" value="0" min="0"></div>
+              <div><label style="font-size:11px;">右</label><input type="number" id="cropRight" value="0" min="0"></div>
+              <div><label style="font-size:11px;">下</label><input type="number" id="cropBottom" value="0" min="0"></div>
+              <div><label style="font-size:11px;">左</label><input type="number" id="cropLeft" value="0" min="0"></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="padding:16px;">
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">在图片上涂抹要处理的区域</p>
+            <canvas id="removeCanvas" class="brush-canvas" width="400" height="300"></canvas>
+          </div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" id="wmRemoveApply" disabled>应用处理</button>
+            <button class="btn btn-outline" id="wmRemoveDownload" disabled>下载</button>
+          </div>
+        </div>
       </div>
-      <div class="actions-bar">
-        <button class="btn btn-outline btn-sm" id="wmRemoveUndo">撤销</button>
-        <button class="btn btn-outline btn-sm" id="wmRemoveClear">清除所有标记</button>
-        <button class="btn btn-primary" id="wmRemoveApply" disabled>应用去除</button>
-        <button class="btn btn-outline" id="wmRemoveDownload" disabled>下载</button>
-      </div>
-      <div style="margin-top:16px;"><div id="wmRemovePreview" style="position:relative;display:inline-block;"></div></div>
-    </div>`;
+    </div>
+  `;
+
   const dropContainer = $('#wmRemoveDrop');
-  let origCanvas, displayCanvas, marks = [], brushSize, smoothness, imgW, imgH, scale;
-  dropContainer.appendChild(createDropZone('image/*', false, async files => {
-    if (!files.length) return; marks = []; state.images = [];
-    const data = await loadImage(files[0]); state.images.push(data);
-    imgW = data.width; imgH = data.height;
-    origCanvas = document.createElement('canvas'); origCanvas.width = imgW; origCanvas.height = imgH;
-    origCanvas.getContext('2d').drawImage(data.img, 0, 0);
-    const maxW = Math.min(600, imgW);
-    scale = maxW / imgW;
-    displayCanvas = document.createElement('canvas');
-    displayCanvas.width = Math.round(imgW * scale); displayCanvas.height = Math.round(imgH * scale);
-    displayCanvas.style.maxWidth = '100%'; displayCanvas.style.cursor = 'crosshair';
-    redrawDisplay();
-    const prev = $('#wmRemovePreview'); prev.innerHTML = ''; prev.appendChild(displayCanvas);
-    $('#wmRemoveApply').disabled = false;
-    displayCanvas.addEventListener('mousedown', e => {
-      const rect = displayCanvas.getBoundingClientRect();
-      const x = Math.round((e.clientX - rect.left) / scale);
-      const y = Math.round((e.clientY - rect.top) / scale);
-      marks.push([x, y, parseInt($('#wmRemoveSize').value), parseInt($('#wmRemoveSmooth').value)]);
-      redrawDisplay();
-    });
-  }));
-  $('#wmRemoveUndo').addEventListener('click', () => { marks.pop(); if (displayCanvas) redrawDisplay(); });
-  $('#wmRemoveClear').addEventListener('click', () => { marks = []; if (displayCanvas) redrawDisplay(); });
-  function redrawDisplay() {
-    if (!displayCanvas || !origCanvas) return;
-    const dCtx = displayCanvas.getContext('2d');
-    dCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
-    dCtx.drawImage(origCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
-    dCtx.strokeStyle = 'red'; dCtx.lineWidth = 2;
-    marks.forEach(([x, y, sz]) => { dCtx.beginPath(); dCtx.arc(x * scale, y * scale, sz * scale, 0, Math.PI * 2); dCtx.stroke(); });
-  }
-  $('#wmRemoveApply').addEventListener('click', () => applyWatermarkRemove(origCanvas, marks));
-  $('#wmRemoveDownload').addEventListener('click', () => {
-    if (state.processedImages.length) downloadBlob(state.processedImages[0].blob, 'removed.jpg');
+  dropContainer.appendChild(createDropZone('image/*', false, handleWmRemoveFiles));
+
+  $('#removeMode').addEventListener('change', function() {
+    $('#blurSettings').style.display = this.value === 'blur' ? 'block' : 'none';
+    $('#fillSettings').style.display = this.value === 'fill' ? 'block' : 'none';
+    $('#cropSettings').style.display = this.value === 'crop' ? 'block' : 'none';
   });
+
+  $('#wmRemoveClear').addEventListener('click', () => {
+    state.images = []; state.processedImages = [];
+    $('#wmRemoveApply').disabled = true;
+    $('#wmRemoveDownload').disabled = true;
+    $('#wmRemoveReset').disabled = true;
+    const canvas = $('#removeCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('请先上传图片', canvas.width/2, canvas.height/2);
+    dropContainer.innerHTML = '';
+    dropContainer.appendChild(createDropZone('image/*', false, handleWmRemoveFiles));
+  });
+
+  $('#wmRemoveReset').addEventListener('click', resetRemoveCanvas);
+  $('#wmRemoveApply').addEventListener('click', applyWatermarkRemove);
+
+  $('#wmRemoveDownload').addEventListener('click', () => {
+    if (state.processedImages.length) {
+      downloadBlob(state.processedImages[0].blob, 'removed.jpg');
+    }
+  });
+
+  // Init canvas placeholder
+  initRemoveCanvas();
 }
 
-async function applyWatermarkRemove(origCanvas, marks) {
-  if (!origCanvas || !marks.length) return;
-  const ctx = origCanvas.getContext('2d');
-  for (const [cx, cy, bSize, smooth] of marks) {
-    const r = bSize + smooth;
-    const x0 = Math.max(0, cx - r), y0 = Math.max(0, cy - r);
-    const patchW = Math.min(r * 2, origCanvas.width - x0), patchH = Math.min(r * 2, origCanvas.height - y0);
-    if (patchW <= 0 || patchH <= 0) continue;
-    const patch = ctx.getImageData(x0, y0, patchW, patchH);
-    const temp = ctx.getImageData(x0, y0, patchW, patchH);
-    const pd = patch.data, td = temp.data;
-    // Simple inpainting: average surrounding pixels outside brush zone
-    for (let py = 0; py < patchH; py++) {
-      for (let px = 0; px < patchW; px++) {
-        const dx = px - (cx - x0), dy = py - (cy - y0);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > bSize + smooth) continue;
-        let sumR = 0, sumG = 0, sumB = 0, count = 0;
-        const sampleR = Math.max(2, Math.ceil(smooth));
-        for (let sy = -sampleR; sy <= sampleR; sy++) {
-          for (let sx = -sampleR; sx <= sampleR; sx++) {
-            const nx = px + sx, ny = py + sy;
-            if (nx < 0 || ny < 0 || nx >= patchW || ny >= patchH) continue;
-            const nd = Math.sqrt((nx - (cx - x0)) ** 2 + (ny - (cy - y0)) ** 2);
-            if (nd <= bSize + smooth) continue; // skip pixels inside removal zone
-            const ni = (ny * patchW + nx) * 4;
-            sumR += td[ni]; sumG += td[ni + 1]; sumB += td[ni + 2]; count++;
-          }
-        }
-        if (count > 0) {
-          const factor = dist <= bSize ? 1 : 1 - (dist - bSize) / smooth;
-          const pi = (py * patchW + px) * 4;
-          pd[pi] = Math.round(pd[pi] * (1 - factor) + (sumR / count) * factor);
-          pd[pi + 1] = Math.round(pd[pi + 1] * (1 - factor) + (sumG / count) * factor);
-          pd[pi + 2] = Math.round(pd[pi + 2] * (1 - factor) + (sumB / count) * factor);
-        }
-      }
-    }
-    ctx.putImageData(patch, x0, y0);
-  }
-  const blob = await new Promise(r => origCanvas.toBlob(r, 'image/jpeg', 0.92));
-  state.processedImages = [{ dataUrl: origCanvas.toDataURL('image/jpeg', 0.92), blob, size: blob.size }];
-  $('#wmRemoveDownload').disabled = false;
+function initRemoveCanvas() {
+  const canvas = $('#removeCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('请先上传图片', canvas.width/2, canvas.height/2);
+  ctx.textAlign = 'start';
+}
 
-  // Update display
-  const prev = $('#wmRemovePreview');
-  const img = document.createElement('img');
-  img.src = origCanvas.toDataURL('image/jpeg', 0.92);
-  img.style.maxWidth = '100%'; img.style.maxHeight = '400px';
-  prev.innerHTML = ''; prev.appendChild(img);
-  toast('水印已去除');
+async function handleWmRemoveFiles(files) {
+  if (!files.length) return;
+  state.images = [];
+  state.processedImages = [];
+  const imgData = await loadImage(files[0]);
+  state.images.push(imgData);
+
+  const canvas = $('#removeCanvas');
+  const maxW = 600;
+  const scale = Math.min(1, maxW / imgData.width);
+  canvas.width = Math.round(imgData.width * scale);
+  canvas.height = Math.round(imgData.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imgData.img, 0, 0, canvas.width, canvas.height);
+  canvas._origDataUrl = imgData.dataUrl;
+  canvas._origImg = imgData.img;
+  canvas._scale = scale;
+  canvas._brushMask = new Set();
+
+  $('#wmRemoveApply').disabled = false;
+  $('#wmRemoveReset').disabled = false;
+  $('#wmRemoveDownload').disabled = true;
+
+  setupRemoveBrush(canvas);
+}
+
+function setupRemoveBrush(canvas) {
+  canvas._drawing = false;
+  canvas.onmousedown = e => { canvas._drawing = true; paintRemoveBrush(canvas, e); };
+  canvas.onmousemove = e => { if (canvas._drawing) paintRemoveBrush(canvas, e); };
+  canvas.onmouseup = () => { canvas._drawing = false; };
+  canvas.onmouseleave = () => { canvas._drawing = false; };
+  canvas.ontouchstart = e => { e.preventDefault(); canvas._drawing = true; paintRemoveBrush(canvas, e.touches[0]); };
+  canvas.ontouchmove = e => { e.preventDefault(); if (canvas._drawing) paintRemoveBrush(canvas, e.touches[0]); };
+  canvas.ontouchend = () => { canvas._drawing = false; };
+}
+
+function paintRemoveBrush(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  // Account for CSS scaling (max-width:100% compresses display size)
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const size = parseInt($('#brushSize')?.value || 30);
+
+  const ctx = canvas.getContext('2d');
+  const mode = $('#removeMode')?.value || 'blur';
+
+  if (mode === 'blur') {
+    // Create blurred version of the current canvas area
+    const strength = parseInt($('#blurStrength')?.value || 20);
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = size * 2; offCanvas.height = size * 2;
+    const offCtx = offCanvas.getContext('2d');
+    offCtx.filter = `blur(${strength}px)`;
+    offCtx.drawImage(canvas, x - size, y - size, size*2, size*2, 0, 0, size*2, size*2);
+    offCtx.filter = 'none';
+    // Feather the edges
+    const mask = document.createElement('canvas');
+    mask.width = size * 2; mask.height = size * 2;
+    const maskCtx = mask.getContext('2d');
+    const gradient = maskCtx.createRadialGradient(size, size, size * 0.3, size, size, size);
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.7, 'rgba(255,255,255,0.8)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    maskCtx.fillStyle = gradient;
+    maskCtx.fillRect(0, 0, size*2, size*2);
+    offCtx.globalCompositeOperation = 'destination-in';
+    offCtx.drawImage(mask, 0, 0);
+    ctx.drawImage(offCanvas, x - size, y - size);
+  } else if (mode === 'fill') {
+    const fillColor = $('#fillColor')?.value || '#ffffff';
+    ctx.fillStyle = fillColor;
+    ctx.beginPath();
+    ctx.arc(x, y, size/2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  canvas._brushMask.add(`${Math.round(x)},${Math.round(y)}`);
+}
+
+function resetRemoveCanvas() {
+  if (!state.images.length) return;
+  const canvas = $('#removeCanvas');
+  const imgData = state.images[0];
+  const scale = canvas._scale;
+  canvas.width = Math.round(imgData.width * scale);
+  canvas.height = Math.round(imgData.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imgData.img, 0, 0, canvas.width, canvas.height);
+  canvas._brushMask = new Set();
+}
+
+async function applyWatermarkRemove() {
+  if (!state.images.length) return;
+  const mode = $('#removeMode').value;
+  const imgData = state.images[0];
+  const canvas = $('#removeCanvas');
+  const scale = canvas._scale;
+
+  const outCanvas = document.createElement('canvas');
+
+  if (mode === 'crop') {
+    const top = parseInt($('#cropTop').value) || 0;
+    const right = parseInt($('#cropRight').value) || 0;
+    const bottom = parseInt($('#cropBottom').value) || 0;
+    const left = parseInt($('#cropLeft').value) || 0;
+    const w = imgData.width - left - right;
+    const h = imgData.height - top - bottom;
+    if (w <= 0 || h <= 0) { toast('裁剪参数过大'); return; }
+    outCanvas.width = w;
+    outCanvas.height = h;
+    const ctx = outCanvas.getContext('2d');
+    ctx.drawImage(imgData.img, left, top, w, h, 0, 0, w, h);
+  } else if (mode === 'blur') {
+    // Apply blur to masked areas on full-res image
+    outCanvas.width = imgData.width;
+    outCanvas.height = imgData.height;
+    const ctx = outCanvas.getContext('2d');
+    ctx.drawImage(imgData.img, 0, 0);
+
+    const strength = parseInt($('#blurStrength').value || 20);
+    const brushSize = parseInt($('#brushSize').value || 30);
+    // Apply blur in masked regions at full resolution
+    const ratio = 1 / scale;
+    // Process each brush point - blur at full resolution
+    const seen = new Set();
+    canvas._brushMask.forEach(key => {
+      const [bx, by] = key.split(',').map(Number);
+      const x = Math.round(bx * ratio), y = Math.round(by * ratio);
+      const s = Math.round(brushSize * ratio);
+      // Create blurred patch from original image
+      const patch = document.createElement('canvas');
+      patch.width = s; patch.height = s;
+      const pCtx = patch.getContext('2d');
+      pCtx.filter = `blur(${strength * ratio}px)`;
+      pCtx.drawImage(imgData.img, x - s/2, y - s/2, s, s, 0, 0, s, s);
+      pCtx.filter = 'none';
+      ctx.drawImage(patch, x - s/2, y - s/2);
+    });
+  } else if (mode === 'fill') {
+    outCanvas.width = imgData.width;
+    outCanvas.height = imgData.height;
+    const ctx = outCanvas.getContext('2d');
+    ctx.drawImage(imgData.img, 0, 0);
+    const fillColor = $('#fillColor').value || '#ffffff';
+    const brushSize = parseInt($('#brushSize').value || 30);
+    const ratio = 1 / scale;
+    ctx.fillStyle = fillColor;
+    canvas._brushMask.forEach(key => {
+      const [bx, by] = key.split(',').map(Number);
+      const x = bx * ratio, y = by * ratio;
+      const s = brushSize * ratio;
+      ctx.beginPath();
+      ctx.arc(x, y, s/2, 0, Math.PI*2);
+      ctx.fill();
+    });
+  }
+
+  const blob = await canvasToBlob(outCanvas, 'image/jpeg', 0.92);
+  const dataUrl = outCanvas.toDataURL('image/jpeg', 0.92);
+  state.processedImages = [{ dataUrl, blob, size: blob.size }];
+
+  // Show result
+  const preview = $('#wmRemoveDrop').parentElement;
+  let resultCard = preview.querySelector('.preview-card.result');
+  if (!resultCard) {
+    resultCard = document.createElement('div');
+    resultCard.className = 'preview-card result';
+    resultCard.style.marginTop = '12px';
+    preview.appendChild(resultCard);
+  }
+  resultCard.innerHTML = `
+    <div class="preview-card-header"><span>处理结果</span><span style="color:var(--success);">${formatSize(blob.size)}</span></div>
+    <div class="preview-card-body"><img src="${dataUrl}" alt=""></div>
+  `;
+  $('#wmRemoveDownload').disabled = false;
+  toast('处理完成');
 }
 
 // ========== COMPRESS ==========
 function renderCompress(main) {
   state.images = [];
+  state.processedImages = [];
   main.innerHTML = `
     <div class="card">
       <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">图片压缩</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">调整质量参数压缩图片，支持批量处理。所有处理在本地完成。</p>
-      <div id="compressDrop"></div>
-      <div class="form-row" style="margin-top:12px;">
-        <div class="form-group"><label>输出格式</label><select id="compressFormat"><option value="jpeg">JPEG</option><option value="webp">WebP</option><option value="png">PNG</option></select></div>
-        <div class="form-group"><label>压缩质量: <span id="compressQualityVal">75</span></label><input type="range" id="compressQuality" min="5" max="100" value="75"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div id="compressDrop"></div>
+          <div class="actions-bar" style="margin-top:12px;">
+            <button class="btn btn-outline btn-sm" id="compressClear">清空</button>
+          </div>
+        </div>
+        <div>
+          <div class="form-group"><label>压缩质量: <span id="qualityVal">80</span>%</label>
+            <input type="range" id="quality" min="10" max="100" value="80">
+          </div>
+          <div class="form-group"><label>输出格式</label>
+            <select id="format">
+              <option value="image/jpeg">JPEG（推荐，体积小）</option>
+              <option value="image/webp">WebP（更小，部分平台不兼容）</option>
+              <option value="image/png">PNG（无损，体积较大）</option>
+            </select>
+          </div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" id="compressApply" disabled>压缩</button>
+            <button class="btn btn-outline" id="compressDownload" disabled>下载</button>
+            <button class="btn btn-outline btn-sm" id="compressBatch">批量压缩</button>
+          </div>
+        </div>
       </div>
-      <div class="form-group"><label>最大尺寸 (px, 0=不限制)</label><input type="number" id="compressMaxSize" value="1920" min="0"></div>
-      <div class="actions-bar">
-        <button class="btn btn-primary" id="compressApply" disabled>开始压缩</button>
-        <button class="btn btn-outline" id="compressDownload" disabled>全部下载</button>
-      </div>
-      <div style="margin-top:16px;" id="compressPreview"></div>
-    </div>`;
+      <div style="margin-top:16px;" id="compressResult"></div>
+    </div>
+  `;
+
   const dropContainer = $('#compressDrop');
-  dropContainer.appendChild(createDropZone('image/*', true, files => {
-    if (!files.length) return; state.images = []; state.processedImages = [];
-    Promise.all([...files].map(f => loadImage(f))).then(data => {
-      state.images = data; $('#compressApply').disabled = false;
-      toast(`已加载 ${data.length} 张图片`);
-    });
-  }));
-  $('#compressQuality').addEventListener('input', function() { $('#compressQualityVal').textContent = this.value; });
-  $('#compressApply').addEventListener('click', () => applyCompress());
-  $('#compressDownload').addEventListener('click', () => {
-    state.processedImages.forEach((r, i) => downloadBlob(r.blob, `compressed_${i}.${$('#compressFormat').value}`));
+  dropContainer.appendChild(createDropZone('image/*', true, handleCompressFiles));
+
+  $('#quality').addEventListener('input', function() { $('#qualityVal').textContent = this.value; });
+  $('#compressClear').addEventListener('click', () => {
+    state.images = []; state.processedImages = [];
+    $('#compressApply').disabled = true;
+    $('#compressDownload').disabled = true;
+    $('#compressResult').innerHTML = '';
+    dropContainer.innerHTML = '';
+    dropContainer.appendChild(createDropZone('image/*', true, handleCompressFiles));
   });
+  $('#compressApply').addEventListener('click', applyCompress);
+  $('#compressDownload').addEventListener('click', () => {
+    if (state.processedImages.length === 1) {
+      downloadBlob(state.processedImages[0].blob, 'compressed.' + getFormatExt());
+    } else {
+      downloadAll(state.processedImages, 'compressed');
+    }
+  });
+  $('#compressBatch').addEventListener('click', async () => {
+    if (state.images.length < 2) { toast('请先上传多张图片'); return; }
+    await applyCompress();
+    downloadAll(state.processedImages, 'compressed');
+  });
+}
+
+function getFormatExt() {
+  const fmt = $('#format')?.value || 'image/jpeg';
+  return fmt.split('/')[1] || 'jpg';
+}
+
+async function handleCompressFiles(files) {
+  state.images = [];
+  state.processedImages = [];
+  for (const file of files) {
+    const imgData = await loadImage(file);
+    state.images.push(imgData);
+  }
+  $('#compressApply').disabled = false;
+
+  $('#compressResult').innerHTML = state.images.map((img, i) => `
+    <div class="preview-card" style="margin-bottom:8px;">
+      <div class="preview-card-header"><span>${img.file.name}</span><span>原始 ${formatSize(img.file.size)}</span></div>
+      <div class="preview-card-body"><img src="${img.dataUrl}" style="max-height:120px;"></div>
+    </div>
+  `).join('');
 }
 
 async function applyCompress() {
   if (!state.images.length) return;
-  const format = $('#compressFormat').value;
-  const quality = parseInt($('#compressQuality').value) / 100;
-  const maxSize = parseInt($('#compressMaxSize').value) || 0;
-  const results = [];
-  const prev = $('#compressPreview'); prev.innerHTML = '<p style="font-size:13px;">处理中...</p>';
+  const quality = parseInt($('#quality').value) / 100;
+  const format = $('#format').value;
 
+  state.processedImages = [];
   for (const imgData of state.images) {
-    let w = imgData.width, h = imgData.height;
-    if (maxSize && Math.max(w, h) > maxSize) {
-      const ratio = maxSize / Math.max(w, h);
-      w = Math.round(w * ratio); h = Math.round(h * ratio);
-    }
-    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(imgData.img, 0, 0, w, h);
-    const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
-    const blob = await new Promise(r => canvas.toBlob(r, mime, quality));
-    results.push({
-      dataUrl: canvas.toDataURL(mime, quality), blob, size: blob.size,
-      origSize: imgData.file.size, name: imgData.file.name,
-    });
+    const canvas = document.createElement('canvas');
+    canvas.width = imgData.width;
+    canvas.height = imgData.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgData.img, 0, 0);
+    const blob = await canvasToBlob(canvas, format, quality);
+    const dataUrl = canvas.toDataURL(format, quality);
+    const ext = getFormatExt();
+    state.processedImages.push({ dataUrl, blob, size: blob.size, ext, origSize: imgData.file.size });
   }
-  state.processedImages = results;
+
+  // Show results
+  const result = $('#compressResult');
+  result.innerHTML = state.processedImages.map((p, i) => {
+    const origSize = p.origSize;
+    const ratio = origSize > 0 ? p.size / origSize : 1;
+    const pct = Math.round(ratio * 100);
+    return `
+      <div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="${p.dataUrl}" style="width:64px;height:64px;object-fit:cover;border-radius:4px;">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">${state.images[i].file.name}</div>
+            <div class="size-bar"><div class="compressed" style="flex:${pct};"></div><div class="original" style="flex:${100-pct};"></div></div>
+            <div class="size-info"><span style="color:var(--success);">${formatSize(p.size)}</span><span>${formatSize(origSize)}</span><span>节省 ${100-pct}%</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
   $('#compressDownload').disabled = false;
-  const totalOrig = results.reduce((s, r) => s + r.origSize, 0);
-  const totalNew = results.reduce((s, r) => s + r.size, 0);
-  const saved = totalOrig - totalNew;
-  const pct = totalOrig > 0 ? Math.round(saved / totalOrig * 100) : 0;
-  prev.innerHTML = `<p class="result-count">共 ${results.length} 张 | 原始 ${formatSize(totalOrig)} → ${formatSize(totalNew)} | 节省 ${formatSize(saved)} (${pct}%)</p>`
-    + results.map((r, i) => {
-      const rpct = Math.round((r.origSize - r.size) / r.origSize * 100);
-      const badge = rpct > 30 ? 'good' : rpct > 10 ? 'ok' : 'bad';
-      return `<div style="margin-bottom:8px;"><img src="${r.dataUrl}" style="max-width:100%;max-height:200px;"><p style="font-size:11px;color:var(--text-secondary);">${r.name}: ${formatSize(r.origSize)} → ${formatSize(r.size)} <span class="quality-badge ${badge}">-${rpct}%</span></p></div>`;
-    }).join('');
+  toast(`压缩完成，平均节省 ${Math.round(state.processedImages.reduce((s, p) => s + (1 - p.size/(p.origSize||1))*100, 0) / state.processedImages.length)}%`);
 }
 
 // ========== RESIZE ==========
 function renderResize(main) {
   state.images = [];
+  state.processedImages = [];
   main.innerHTML = `
     <div class="card">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">批量改尺寸</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">批量调整图片尺寸，支持固定宽高、等比缩放、预设尺寸。</p>
-      <div id="resizeDrop"></div>
-      <div class="form-group" style="margin-top:12px;"><label>缩放模式</label><select id="resizeMode"><option value="ratio">等比缩放</option><option value="fixed">固定宽高</option><option value="preset">预设尺寸</option></select></div>
-      <div id="resizeRatioOpts">
-        <div class="form-group"><label>缩放比例: <span id="resizeRatioVal">50</span>%</label><input type="range" id="resizeRatio" min="5" max="200" value="50"></div>
-      </div>
-      <div id="resizeFixedOpts" style="display:none;">
-        <div class="form-row">
-          <div class="form-group"><label>宽度 (px)</label><input type="number" id="resizeW" value="800" min="1"></div>
-          <div class="form-group"><label>高度 (px)</label><input type="number" id="resizeH" value="600" min="1"></div>
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">修改尺寸</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div id="resizeDrop"></div>
+          <div class="actions-bar" style="margin-top:12px;">
+            <button class="btn btn-outline btn-sm" id="resizeClear">清空</button>
+          </div>
+        </div>
+        <div>
+          <div class="form-row">
+            <div class="form-group"><label>宽度 (px)</label><input type="number" id="resizeW" value="800" min="1" max="10000"></div>
+            <div class="form-group"><label>高度 (px)</label><input type="number" id="resizeH" value="600" min="1" max="10000"></div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="keepRatio" checked style="width:auto;">
+            <label style="margin:0;">保持宽高比</label>
+          </div>
+          <div class="form-group"><label>快捷预设</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="presets">
+              <button class="btn btn-outline btn-sm" data-w="1920" data-h="1080">1920×1080</button>
+              <button class="btn btn-outline btn-sm" data-w="1080" data-h="1920">1080×1920</button>
+              <button class="btn btn-outline btn-sm" data-w="800" data-h="800">800×800</button>
+              <button class="btn btn-outline btn-sm" data-w="1280" data-h="720">1280×720</button>
+              <button class="btn btn-outline btn-sm" data-w="50">缩放50%</button>
+            </div>
+          </div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" id="resizeApply" disabled>应用</button>
+            <button class="btn btn-outline" id="resizeDownload" disabled>下载</button>
+            <button class="btn btn-outline btn-sm" id="resizeBatch">批量调整</button>
+          </div>
         </div>
       </div>
-      <div id="resizePresetOpts" style="display:none;">
-        <div class="form-group"><label>预设</label><select id="resizePreset"><option value="1920x1080">1920×1080 (Full HD)</option><option value="1280x720">1280×720 (HD)</option><option value="800x600">800×600</option><option value="400x300">400×300</option></select></div>
-      </div>
-      <div class="actions-bar">
-        <button class="btn btn-primary" id="resizeApply" disabled>批量调整</button>
-        <button class="btn btn-outline" id="resizeDownload" disabled>全部下载</button>
-      </div>
-      <div style="margin-top:16px;" id="resizePreview"></div>
-    </div>`;
+      <div class="preview-area" style="margin-top:16px;" id="resizePreview"></div>
+    </div>
+  `;
+
   const dropContainer = $('#resizeDrop');
-  dropContainer.appendChild(createDropZone('image/*', true, files => {
-    if (!files.length) return; state.images = []; state.processedImages = [];
-    Promise.all([...files].map(f => loadImage(f))).then(data => {
-      state.images = data; $('#resizeApply').disabled = false;
-      toast(`已加载 ${data.length} 张图片`);
-    });
-  }));
-  $('#resizeMode').addEventListener('change', function() {
-    $('#resizeRatioOpts').style.display = this.value === 'ratio' ? '' : 'none';
-    $('#resizeFixedOpts').style.display = this.value === 'fixed' ? '' : 'none';
-    $('#resizePresetOpts').style.display = this.value === 'preset' ? '' : 'none';
+  dropContainer.appendChild(createDropZone('image/*', true, handleResizeFiles));
+
+  $('#resizeClear').addEventListener('click', () => {
+    state.images = []; state.processedImages = [];
+    $('#resizeApply').disabled = true; $('#resizeDownload').disabled = true;
+    $('#resizePreview').innerHTML = '';
+    dropContainer.innerHTML = '';
+    dropContainer.appendChild(createDropZone('image/*', true, handleResizeFiles));
   });
-  $('#resizeRatio').addEventListener('input', function() { $('#resizeRatioVal').textContent = this.value; });
-  $('#resizeApply').addEventListener('click', () => applyResize());
+  $('#resizeApply').addEventListener('click', applyResize);
   $('#resizeDownload').addEventListener('click', () => {
-    state.processedImages.forEach((r, i) => downloadBlob(r.blob, `resized_${i}.jpg`));
+    if (state.processedImages.length === 1) {
+      downloadBlob(state.processedImages[0].blob, 'resized.jpg');
+    } else {
+      downloadAll(state.processedImages, 'resized');
+    }
   });
+  $('#resizeBatch').addEventListener('click', async () => {
+    await applyResize();
+    downloadAll(state.processedImages, 'resized');
+  });
+
+  // Keep ratio logic
+  $('#resizeW').addEventListener('input', function() {
+    if ($('#keepRatio').checked && state.images.length) {
+      const img = state.images[0];
+      const ratio = img.height / img.width;
+      $('#resizeH').value = Math.round(this.value * ratio);
+    }
+  });
+  $('#resizeH').addEventListener('input', function() {
+    if ($('#keepRatio').checked && state.images.length) {
+      const img = state.images[0];
+      const ratio = img.width / img.height;
+      $('#resizeW').value = Math.round(this.value * ratio);
+    }
+  });
+
+  // Presets
+  $$('#presets .btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const w = this.dataset.w;
+      if (w) {
+        if (state.images.length && $('#keepRatio').checked) {
+          const img = state.images[0];
+          const ratio = img.height / img.width;
+          const nw = parseInt(w);
+          $('#resizeW').value = nw;
+          $('#resizeH').value = Math.round(nw * ratio);
+        } else {
+          $('#resizeW').value = w;
+        }
+      }
+    });
+  });
+}
+
+async function handleResizeFiles(files) {
+  state.images = [];
+  state.processedImages = [];
+  for (const file of files) {
+    const imgData = await loadImage(file);
+    state.images.push(imgData);
+  }
+  $('#resizeApply').disabled = false;
+
+  // Set initial dimensions from first image
+  if (state.images.length) {
+    const img = state.images[0];
+    $('#resizeW').value = img.width;
+    $('#resizeH').value = img.height;
+  }
+
+  const preview = $('#resizePreview');
+  preview.innerHTML = state.images.map((img, i) => `
+    <div class="preview-card">
+      <div class="preview-card-header"><span>原图 ${i+1}</span><span style="color:var(--text-secondary);">${img.width}x${img.height}</span></div>
+      <div class="preview-card-body"><img src="${img.dataUrl}" alt=""></div>
+    </div>
+  `).join('');
 }
 
 async function applyResize() {
   if (!state.images.length) return;
-  const mode = $('#resizeMode').value;
-  const results = [];
-  const prev = $('#resizePreview'); prev.innerHTML = '<p style="font-size:13px;">处理中...</p>';
+  const w = parseInt($('#resizeW').value) || 800;
+  const h = parseInt($('#resizeH').value) || 600;
+  const keepRatio = $('#keepRatio').checked;
 
+  state.processedImages = [];
   for (const imgData of state.images) {
-    let w = imgData.width, h = imgData.height;
-    if (mode === 'ratio') {
-      const ratio = parseInt($('#resizeRatio').value) / 100;
-      w = Math.round(w * ratio); h = Math.round(h * ratio);
-    } else if (mode === 'fixed') {
-      w = parseInt($('#resizeW').value); h = parseInt($('#resizeH').value);
+    const canvas = document.createElement('canvas');
+    if (keepRatio) {
+      const ratio = Math.min(w / imgData.width, h / imgData.height);
+      canvas.width = Math.round(imgData.width * ratio);
+      canvas.height = Math.round(imgData.height * ratio);
     } else {
-      const [pw, ph] = $('#resizePreset').value.split('x').map(Number);
-      const pRatio = Math.min(pw / imgData.width, ph / imgData.height);
-      w = Math.round(imgData.width * pRatio); h = Math.round(imgData.height * pRatio);
+      canvas.width = w;
+      canvas.height = h;
     }
-    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(imgData.img, 0, 0, w, h);
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-    results.push({ dataUrl: canvas.toDataURL('image/jpeg', 0.92), blob, size: blob.size, name: imgData.file.name, w, h });
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgData.img, 0, 0, canvas.width, canvas.height);
+    const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    state.processedImages.push({ dataUrl, blob, size: blob.size });
   }
-  state.processedImages = results;
+
+  showProcessedPreview('resizePreview', state.images, state.processedImages);
   $('#resizeDownload').disabled = false;
-  prev.innerHTML = `<p class="result-count">已处理 ${results.length} 张</p>` + results.map((r, i) =>
-    `<div style="margin-bottom:8px;"><img src="${r.dataUrl}" style="max-width:100%;max-height:200px;"><p style="font-size:11px;color:var(--text-secondary);">${r.name} → ${r.w}×${r.h} (${formatSize(r.size)})</p></div>`
-  ).join('');
+  toast(`已调整 ${state.processedImages.length} 张图片尺寸`);
 }
 
 // ========== COLLAGE ==========
 function renderCollage(main) {
-  state.images = [];
+  state.collageImages = [];
+  state.processedImages = [];
   main.innerHTML = `
     <div class="card">
       <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">图片拼图</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">选择多张图片拼接成一张。支持横向、纵向、网格布局。</p>
-      <div id="collageDrop"></div>
-      <div class="form-row" style="margin-top:12px;">
-        <div class="form-group"><label>布局</label><select id="collageLayout"><option value="horizontal">横向拼接</option><option value="vertical">纵向拼接</option><option value="grid">网格拼接</option></select></div>
-        <div class="form-group"><label>间距 (px)</label><input type="number" id="collageGap" value="4" min="0" max="50"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div class="form-group"><label>布局</label>
+            <select id="collageLayout">
+              <option value="2x2">2×2 四宫格</option>
+              <option value="3x3">3×3 九宫格</option>
+              <option value="1x2">1×2 上下</option>
+              <option value="2x1">2×1 左右</option>
+              <option value="2x3">2×3 六宫格</option>
+              <option value="3x2">3×2 六宫格</option>
+              <option value="1x3">1×3 竖排</option>
+              <option value="3x1">3×1 横排</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>间距 (px)</label><input type="number" id="collageSpacing" value="4" min="0" max="50"></div>
+            <div class="form-group"><label>背景色</label><input type="color" id="collageBg" value="#ffffff" style="height:38px;padding:4px;"></div>
+          </div>
+          <div style="margin-top:12px;" id="collageGrid"></div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" id="collageApply" disabled>生成拼图</button>
+            <button class="btn btn-outline" id="collageDownload" disabled>下载</button>
+            <button class="btn btn-outline btn-sm" id="collageClear">清空</button>
+          </div>
+        </div>
+        <div>
+          <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#f8fafc;min-height:300px;display:flex;align-items:center;justify-content:center;" id="collagePreview">
+            <span style="color:var(--text-secondary);font-size:13px;">预览区域</span>
+          </div>
+        </div>
       </div>
-      <div class="form-group"><label>背景色</label><input type="color" id="collageBg" value="#ffffff" style="height:38px;padding:4px;"></div>
-      <div class="actions-bar">
-        <button class="btn btn-primary" id="collageApply" disabled>生成拼图</button>
-        <button class="btn btn-outline" id="collageDownload" disabled>下载</button>
-      </div>
-      <div style="margin-top:16px;" id="collagePreview"></div>
-    </div>`;
-  const dropContainer = $('#collageDrop');
-  dropContainer.appendChild(createDropZone('image/*', true, files => {
-    if (!files.length) return; state.images = []; state.processedImages = [];
-    Promise.all([...files].map(f => loadImage(f))).then(data => {
-      state.images = data; $('#collageApply').disabled = data.length < 2;
-      toast(`已加载 ${data.length} 张图片`);
-    });
-  }));
-  $('#collageApply').addEventListener('click', () => applyCollage());
+    </div>
+  `;
+
+  $('#collageLayout').addEventListener('change', rebuildCollageGrid);
+  $('#collageClear').addEventListener('click', () => {
+    state.collageImages = []; state.processedImages = [];
+    $('#collageApply').disabled = true;
+    $('#collageDownload').disabled = true;
+    $('#collagePreview').innerHTML = '<span style="color:var(--text-secondary);font-size:13px;">预览区域</span>';
+    rebuildCollageGrid();
+  });
+  $('#collageApply').addEventListener('click', applyCollage);
   $('#collageDownload').addEventListener('click', () => {
     if (state.processedImages.length) downloadBlob(state.processedImages[0].blob, 'collage.jpg');
   });
+
+  rebuildCollageGrid();
+}
+
+function getLayoutSize(layout) {
+  const map = { '2x2':[2,2], '3x3':[3,3], '1x2':[1,2], '2x1':[2,1], '2x3':[2,3], '3x2':[3,2], '1x3':[1,3], '3x1':[3,1] };
+  return map[layout] || [2,2];
+}
+
+function rebuildCollageGrid() {
+  const grid = $('#collageGrid');
+  if (!grid) return;
+  const layout = $('#collageLayout').value;
+  const [cols, rows] = getLayoutSize(layout);
+  const total = cols * rows;
+
+  // Ensure state array matches
+  while (state.collageImages.length < total) state.collageImages.push(null);
+  state.collageImages = state.collageImages.slice(0, total);
+
+  grid.innerHTML = '';
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gap = '4px';
+  grid.style.aspectRatio = `${cols}/${rows}`;
+
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.aspectRatio = '1';
+    if (state.collageImages[i]) {
+      cell.innerHTML = `<img src="${state.collageImages[i].dataUrl}" alt=""><span class="cell-label" style="position:absolute;font-size:10px;color:rgba(255,255,255,.8);background:rgba(0,0,0,.4);padding:2px 6px;border-radius:3px;text-shadow:none;">点击更换</span>`;
+    } else {
+      cell.innerHTML = `<span class="cell-label">+ 图片 ${i+1}</span>`;
+    }
+    cell.addEventListener('click', () => uploadCollageImage(i));
+    grid.appendChild(cell);
+  }
+
+  updateCollageApply();
+}
+
+function uploadCollageImage(index) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const imgData = await loadImage(file);
+    state.collageImages[index] = imgData;
+    rebuildCollageGrid();
+    updateCollageApply();
+  };
+  input.click();
+}
+
+function updateCollageApply() {
+  const layout = $('#collageLayout')?.value || '2x2';
+  const [cols, rows] = getLayoutSize(layout);
+  const filled = state.collageImages.filter(Boolean).length;
+  $('#collageApply').disabled = filled < 2;
 }
 
 async function applyCollage() {
-  if (state.images.length < 2) return;
   const layout = $('#collageLayout').value;
-  const gap = parseInt($('#collageGap').value) || 0;
-  const bgColor = $('#collageBg').value;
-  const imgs = state.images;
+  const spacing = parseInt($('#collageSpacing').value) || 4;
+  const bgColor = $('#collageBg').value || '#ffffff';
+  const [cols, rows] = getLayoutSize(layout);
 
-  let canvasW, canvasH;
-  if (layout === 'horizontal') {
-    const maxH = Math.max(...imgs.map(i => i.height));
-    canvasW = imgs.reduce((s, i) => s + i.width, 0) + gap * (imgs.length - 1);
-    canvasH = maxH;
-  } else if (layout === 'vertical') {
-    const maxW = Math.max(...imgs.map(i => i.width));
-    canvasW = maxW;
-    canvasH = imgs.reduce((s, i) => s + i.height, 0) + gap * (imgs.length - 1);
-  } else {
-    const cols = Math.ceil(Math.sqrt(imgs.length));
-    const rows = Math.ceil(imgs.length / cols);
-    const cellW = Math.max(...imgs.map(i => i.width));
-    const cellH = Math.max(...imgs.map(i => i.height));
-    canvasW = cellW * cols + gap * (cols - 1);
-    canvasH = cellH * rows + gap * (rows - 1);
-  }
+  const filled = state.collageImages.filter(Boolean);
+  if (filled.length < 2) { toast('请至少上传2张图片'); return; }
 
-  const canvas = document.createElement('canvas'); canvas.width = canvasW; canvas.height = canvasH;
+  // Find max dimensions per cell
+  let cellW = 0, cellH = 0;
+  filled.forEach(img => { cellW = Math.max(cellW, img.width); cellH = Math.max(cellH, img.height); });
+
+  const totalW = cellW * cols + spacing * (cols + 1);
+  const totalH = cellH * rows + spacing * (rows + 1);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = totalW;
+  canvas.height = totalH;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = bgColor; ctx.fillRect(0, 0, canvasW, canvasH);
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, totalW, totalH);
 
-  let x = 0, y = 0;
-  if (layout === 'horizontal') {
-    for (const img of imgs) {
-      ctx.drawImage(img.img, x, (canvasH - img.height) / 2);
-      x += img.width + gap;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx = r * cols + c;
+      const img = state.collageImages[idx];
+      if (!img) continue;
+
+      const dx = spacing + c * (cellW + spacing);
+      const dy = spacing + r * (cellH + spacing);
+
+      // Fit image inside cell maintaining aspect ratio
+      const scale = Math.min(cellW / img.width, cellH / img.height);
+      const iw = img.width * scale;
+      const ih = img.height * scale;
+      const ox = (cellW - iw) / 2;
+      const oy = (cellH - ih) / 2;
+
+      ctx.drawImage(img.img, dx + ox, dy + oy, iw, ih);
     }
-  } else if (layout === 'vertical') {
-    for (const img of imgs) {
-      ctx.drawImage(img.img, (canvasW - img.width) / 2, y);
-      y += img.height + gap;
-    }
-  } else {
-    const cols = Math.ceil(Math.sqrt(imgs.length));
-    const cellW = Math.max(...imgs.map(i => i.width));
-    const cellH = Math.max(...imgs.map(i => i.height));
-    imgs.forEach((img, i) => {
-      const col = i % cols, row = Math.floor(i / cols);
-      ctx.drawImage(img.img, col * (cellW + gap) + (cellW - img.width) / 2, row * (cellH + gap) + (cellH - img.height) / 2);
-    });
   }
 
-  const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-  state.processedImages = [{ dataUrl: canvas.toDataURL('image/jpeg', 0.92), blob, size: blob.size }];
+  const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  state.processedImages = [{ dataUrl, blob, size: blob.size }];
+
+  $('#collagePreview').innerHTML = `<img src="${dataUrl}" style="max-width:100%;max-height:400px;">`;
   $('#collageDownload').disabled = false;
-  const prev = $('#collagePreview');
-  prev.innerHTML = `<img src="${canvas.toDataURL('image/jpeg', 0.92)}" style="max-width:100%;max-height:400px;"><p style="font-size:12px;margin-top:6px;color:var(--text-secondary);">${canvasW}×${canvasH} | ${formatSize(blob.size)}</p>`;
+  toast(`拼图完成 ${totalW}x${totalH}`);
 }
 
 // ========== FORMAT CONVERT ==========
-function renderConvert(main) {
-  state.images = [];
+function renderFormatConvert(main) {
+  state.images = []; state.processedImages = [];
   main.innerHTML = `
     <div class="card">
       <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">格式转换</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">批量转换图片格式。支持 WebP ↔ PNG ↔ JPEG。</p>
-      <div id="convertDrop"></div>
-      <div class="form-row" style="margin-top:12px;">
-        <div class="form-group"><label>目标格式</label><select id="convertFormat"><option value="jpeg">JPEG</option><option value="png">PNG</option><option value="webp">WebP</option></select></div>
-        <div class="form-group"><label>质量: <span id="convertQualityVal">90</span></label><input type="range" id="convertQuality" min="5" max="100" value="90"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div id="convertDrop"></div>
+          <div class="actions-bar" style="margin-top:12px;">
+            <button class="btn btn-outline btn-sm" id="convertClear">清空</button>
+          </div>
+        </div>
+        <div>
+          <div class="form-group"><label>目标格式</label>
+            <select id="convertFmt">
+              <option value="image/jpeg">JPEG（通用，体积小）</option>
+              <option value="image/png">PNG（无损，支持透明）</option>
+              <option value="image/webp">WebP（最小体积）</option>
+            </select>
+          </div>
+          <div class="form-group" id="convertQualityGroup"><label>质量: <span id="convertQualityVal">85</span>%</label>
+            <input type="range" id="convertQuality" min="10" max="100" value="85">
+            <p style="font-size:11px;color:var(--text-secondary);margin-top:4px;">PNG格式忽略质量设置</p>
+          </div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" id="convertApply" disabled>开始转换</button>
+            <button class="btn btn-outline" id="convertDownload" disabled>下载全部</button>
+          </div>
+        </div>
       </div>
-      <div class="actions-bar">
-        <button class="btn btn-primary" id="convertApply" disabled>批量转换</button>
-        <button class="btn btn-outline" id="convertDownload" disabled>全部下载</button>
-      </div>
-      <div style="margin-top:16px;" id="convertPreview"></div>
+      <div style="margin-top:16px;" id="convertResult"></div>
     </div>`;
+
   const dropContainer = $('#convertDrop');
-  dropContainer.appendChild(createDropZone('image/*', true, files => {
-    if (!files.length) return; state.images = []; state.processedImages = [];
-    Promise.all([...files].map(f => loadImage(f))).then(data => {
-      state.images = data; $('#convertApply').disabled = false;
-      toast(`已加载 ${data.length} 张图片`);
-    });
-  }));
+  dropContainer.appendChild(createDropZone('image/*', true, handleConvertFiles));
+
   $('#convertQuality').addEventListener('input', function() { $('#convertQualityVal').textContent = this.value; });
-  $('#convertApply').addEventListener('click', () => applyConvert());
-  $('#convertDownload').addEventListener('click', () => {
-    state.processedImages.forEach((r, i) => downloadBlob(r.blob, r.filename));
+  $('#convertFmt').addEventListener('change', function() {
+    $('#convertQualityGroup').style.display = this.value === 'image/png' ? 'none' : 'block';
   });
+  $('#convertClear').addEventListener('click', () => {
+    state.images = []; state.processedImages = [];
+    $('#convertApply').disabled = true; $('#convertDownload').disabled = true;
+    $('#convertResult').innerHTML = '';
+    dropContainer.innerHTML = '';
+    dropContainer.appendChild(createDropZone('image/*', true, handleConvertFiles));
+  });
+  $('#convertApply').addEventListener('click', applyConvert);
+  $('#convertDownload').addEventListener('click', () => {
+    if (state.processedImages.length) {
+      downloadAll(state.processedImages, 'converted');
+    }
+  });
+}
+
+async function handleConvertFiles(files) {
+  state.images = []; state.processedImages = [];
+  for (const file of files) {
+    const imgData = await loadImage(file);
+    state.images.push(imgData);
+  }
+  $('#convertApply').disabled = false;
+  $('#convertResult').innerHTML = state.images.map((img, i) => `
+    <div class="batch-item"><img src="${img.dataUrl}"><div class="info"><div class="name">${img.file.name}</div><div class="size">${formatSize(img.file.size)} | ${img.width}x${img.height}</div></div></div>
+  `).join('');
 }
 
 async function applyConvert() {
   if (!state.images.length) return;
-  const format = $('#convertFormat').value;
+  const fmt = $('#convertFmt').value;
   const quality = parseInt($('#convertQuality').value) / 100;
-  const mimeMap = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
-  const extMap = { jpeg: 'jpg', png: 'png', webp: 'webp' };
-  const mime = mimeMap[format];
-  const ext = extMap[format];
-  const results = [];
-  const prev = $('#convertPreview'); prev.innerHTML = '<p style="font-size:13px;">处理中...</p>';
+  const ext = fmt.split('/')[1];
 
+  state.processedImages = [];
   for (const imgData of state.images) {
-    const canvas = document.createElement('canvas'); canvas.width = imgData.width; canvas.height = imgData.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = imgData.width; canvas.height = imgData.height;
     canvas.getContext('2d').drawImage(imgData.img, 0, 0);
-    const blob = await new Promise(r => canvas.toBlob(r, mime, quality));
-    const origExt = imgData.file.name.split('.').pop().toLowerCase();
-    const filename = imgData.file.name.replace(new RegExp(`\.${origExt}$`, 'i'), `.${ext}`);
-    results.push({ dataUrl: canvas.toDataURL(mime, quality), blob, size: blob.size, name: imgData.file.name, filename });
+    const blob = await canvasToBlob(canvas, fmt, quality);
+    const dataUrl = canvas.toDataURL(fmt, quality);
+    state.processedImages.push({ dataUrl, blob, size: blob.size, ext, origSize: imgData.file.size, name: imgData.file.name });
   }
-  state.processedImages = results;
+
+  $('#convertResult').innerHTML = state.processedImages.map((p, i) => {
+    const pct = p.origSize > 0 ? Math.round(p.size / p.origSize * 100) : 100;
+    const changeClass = p.size < p.origSize ? 'var(--success)' : 'var(--danger)';
+    return `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;"><img src="${p.dataUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;"><div style="flex:1;"><div style="font-size:13px;font-weight:500;">${p.name.replace(/\.[^.]+$/, '')}.${p.ext}</div><div style="font-size:12px;color:var(--text-secondary);">${formatSize(p.origSize)} → ${formatSize(p.size)} (${pct}%)</div></div></div>`;
+  }).join('');
+
   $('#convertDownload').disabled = false;
-  prev.innerHTML = `<p class="result-count">已转换 ${results.length} 张 → .${ext}</p>` + results.map(r =>
-    `<div style="margin-bottom:8px;"><img src="${r.dataUrl}" style="max-width:100%;max-height:200px;"><p style="font-size:11px;color:var(--text-secondary);">${r.name} → ${r.filename} (${formatSize(r.size)})</p></div>`
-  ).join('');
+  toast(`已转换 ${state.processedImages.length} 张图片为 ${ext.toUpperCase()}`);
 }
 
 // ========== ID PHOTO ==========
 const ID_PRESETS = {
-  '一寸 (295×413)': [295, 413],
-  '二寸 (413×579)': [413, 579],
-  '小一寸 (260×378)': [260, 378],
-  '大一寸 (390×567)': [390, 567],
-  '小二寸 (413×531)': [413, 531],
+  '1寸': [295, 413],
+  '小1寸': [260, 378],
+  '大1寸': [390, 567],
+  '2寸': [413, 579],
+  '小2寸': [413, 531],
+  '护照': [390, 567],
+  '签证': [350, 450],
+  '社保卡': [358, 441],
 };
 
-function renderIdphoto(main) {
-  state.images = [];
-  state.processedImages = [];
+function renderIdPhoto(main) {
+  state.images = []; state.processedImages = [];
   main.innerHTML = `
     <div class="card">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">证件照处理</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">裁剪证件照尺寸，替换背景颜色。支持一寸、二寸等常见规格。</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">证件照裁剪 & 背景替换</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
         <div>
           <div id="idphotoDrop"></div>
           <div class="form-group" style="margin-top:12px;"><label>尺寸预设</label>
@@ -835,8 +1592,6 @@ function renderIdphoto(main) {
               <span style="font-size:12px;color:var(--text-secondary);">点击人物做参考标记</span>
             </div>
           </div>
-          <div class="form-group"><label>容差</label><input type="range" id="idphotoTolerance" min="5" max="100" value="40"></div>
-          <div class="form-group"><label>边缘羽化: <span id="idphotoFeatherVal">3</span></label><input type="range" id="idphotoFeather" min="0" max="10" value="3"><p style="font-size:11px;color:var(--text-secondary);margin-top:4px;">0=锐利边缘 10=柔和过渡</p></div>
           <div class="form-group"><label>新背景色</label><input type="color" id="idphotoBg" value="#ffffff" style="height:38px;padding:4px;"><div style="display:flex;gap:6px;margin-top:6px;">${['#ffffff','#438edb','#ff0000','#cccccc'].map(c => `<button class="btn btn-outline btn-sm" style="background:${c};width:24px;height:24px;padding:0;border:2px solid var(--border);" data-color="${c}"></button>`).join('')}</div></div>
           <div class="actions-bar">
             <button class="btn btn-primary" id="idphotoApply" disabled>应用背景替换</button>
@@ -874,12 +1629,6 @@ function renderIdphoto(main) {
   });
 
   // Background color quick picks
-  // Feather slider
-  $('#idphotoFeather').addEventListener('input', function() {
-    $('#idphotoFeatherVal').textContent = this.value;
-    if (state._idphotoOrigCanvas) applyIdphotoBg();
-  });
-
   main.querySelectorAll('[data-color]').forEach(btn => btn.addEventListener('click', function() {
     $('#idphotoBg').value = this.dataset.color;
     if (state._idphotoOrigCanvas) applyIdphotoBg();
@@ -937,128 +1686,89 @@ function applyIdphotoBg() {
   const srcCanvas = state._idphotoOrigCanvas;
   const srcCtx = srcCanvas.getContext('2d');
   const srcData = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
-  const tolerance = parseInt($('#idphotoTolerance').value);
   const newBg = $('#idphotoBg').value;
   const nr = parseInt(newBg.slice(1,3), 16), ng = parseInt(newBg.slice(3,5), 16), nb = parseInt(newBg.slice(5,7), 16);
-
   const pixels = srcData.data;
   const w = srcCanvas.width, h = srcCanvas.height;
 
-  // Phase 1: Sample 4 corners to determine background reference colors
+  // Sample 4 corners → old background reference colors
   const corners = [[0,0],[w-1,0],[0,h-1],[w-1,h-1]];
   const cornerRGB = corners.map(([cx,cy]) => { const ci = (cy*w+cx)*4; return [pixels[ci],pixels[ci+1],pixels[ci+2]]; });
+  let oldR=0,oldG=0,oldB=0; cornerRGB.forEach(([cr,cg,cb])=>{oldR+=cr;oldG+=cg;oldB+=cb});
+  oldR=Math.round(oldR/4); oldG=Math.round(oldG/4); oldB=Math.round(oldB/4);
+  const dR = nr - oldR, dG = ng - oldG, dB = nb - oldB;
 
-  // Average corner color for feathering blend math
-  let avgR=0,avgG=0,avgB=0; cornerRGB.forEach(([cr,cg,cb])=>{avgR+=cr;avgG+=cg;avgB+=cb});
-  avgR=Math.round(avgR/4);avgG=Math.round(avgG/4);avgB=Math.round(avgB/4);
+  const TOL = 40; // fixed tolerance — well-tuned for ID photo backgrounds
 
   try {
 
-  // Phase 2: Flood fill from 4 corners to identify background region
-  // bgMask: 1 = background, 0 = person
+  // --- Phase 1: Flood fill from corners → bgMask (1=bg, 0=person) ---
   const bgMask = new Uint8Array(w * h);
-  const queue = [];
-  for (const [cx, cy] of corners) { queue.push(cy * w + cx); }
-  let head = 0;
-
-  while (head < queue.length) {
-    const idx = queue[head++]; if (bgMask[idx]) continue;
-    const pi = idx * 4;
-    // Pixel is background if close to ANY corner color
-    let minDist = 765;
-    for (const [cr, cg, cb] of cornerRGB) {
-      const d = (Math.abs(pixels[pi]-cr) + Math.abs(pixels[pi+1]-cg) + Math.abs(pixels[pi+2]-cb)) / 3;
-      if (d < minDist) minDist = d;
+  const fq = []; for (const [cx,cy] of corners) fq.push(cy*w+cx);
+  let fh = 0;
+  while (fh < fq.length) {
+    const idx = fq[fh++]; if (bgMask[idx]) continue;
+    const pi = idx * 4; let minD = 765;
+    for (const [cr,cg,cb] of cornerRGB) {
+      const d = (Math.abs(pixels[pi]-cr)+Math.abs(pixels[pi+1]-cg)+Math.abs(pixels[pi+2]-cb))/3;
+      if (d < minD) minD = d;
     }
-    if (minDist >= tolerance) continue;  // too different from corners = person
-    bgMask[idx] = 1;  // mark as background
-    const y = (idx / w) | 0, x = idx % w;
-    if (x > 0 && !bgMask[idx - 1]) queue.push(idx - 1);
-    if (x < w - 1 && !bgMask[idx + 1]) queue.push(idx + 1);
-    if (y > 0 && !bgMask[idx - w]) queue.push(idx - w);
-    if (y < h - 1 && !bgMask[idx + w]) queue.push(idx + w);
+    if (minD >= TOL) continue;
+    bgMask[idx] = 1;
+    const y = (idx/w)|0, x = idx%w;
+    if (x>0&&!bgMask[idx-1]) fq.push(idx-1);
+    if (x<w-1&&!bgMask[idx+1]) fq.push(idx+1);
+    if (y>0&&!bgMask[idx-w]) fq.push(idx-w);
+    if (y<h-1&&!bgMask[idx+w]) fq.push(idx+w);
   }
 
-  // Phase 3: Dilate person mask (shrink background) to remove edge fringes
-  // This eliminates the white/colored halo at person edges after background swap
-  const feather = parseInt($('#idphotoFeather').value) || 0;
+  // --- Phase 2: Signed distance from person/bg boundary ---
+  // sd < 0 = inside person, sd > 0 = inside background, sd = 0 = boundary person side
+  const TRANS = 6; // transition zone width in pixels
+  const sd = new Int16Array(w * h).fill(9999);
+  const bq = [];
 
-  // Phase 3: Build distance map from person edge BEFORE any pixel modification
-  // distance: 0=person, 1..feather=background pixels near person
-  const distance = new Int16Array(w * h).fill(-1);
-  let edgeQ = [];
+  // Seed: all boundary pixels (person or bg that borders the opposite type)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const idx = y * w + x;
-      if (bgMask[idx]) continue;  // background, skip for now
-      distance[idx] = 0;  // person pixel = distance 0
-      // If this person pixel borders background, mark neighbors as distance=1
-      if ((x > 0 && bgMask[idx - 1]) || (x < w - 1 && bgMask[idx + 1]) ||
-          (y > 0 && bgMask[idx - w]) || (y < h - 1 && bgMask[idx + w])) {
-        for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
-          if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-            const nidx = ny * w + nx;
-            if (bgMask[nidx] && distance[nidx] === -1) {
-              distance[nidx] = 1; edgeQ.push(nidx);
-            }
-          }
-        }
-      }
-    }
-  }
-  // Expand distances outward through background
-  let qhead = 0;
-  while (qhead < edgeQ.length) {
-    const idx = edgeQ[qhead++];
-    const d = distance[idx];
-    if (d >= feather) continue;
-    const y = (idx / w) | 0, x = idx % w;
-    for (const [nx, ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
-      if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-        const nidx = ny * w + nx;
-        if (bgMask[nidx] && distance[nidx] === -1) {
-          distance[nidx] = d + 1; edgeQ.push(nidx);
-        }
+      const idx = y * w + x; const isBg = bgMask[idx];
+      if ((x>0&&bgMask[idx-1]!==isBg)||(x<w-1&&bgMask[idx+1]!==isBg)||(y>0&&bgMask[idx-w]!==isBg)||(y<h-1&&bgMask[idx+w]!==isBg)) {
+        sd[idx] = isBg ? 1 : 0;  // bg side = +1, person side = 0
+        bq.push(idx);
       }
     }
   }
 
-  // Phase 4: Minimal dilate — shrink background by 1px to cover anti-alias edge
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x;
-      if (!bgMask[idx]) continue;  // person, skip
-      if ((x > 0 && !bgMask[idx - 1]) || (x < w - 1 && !bgMask[idx + 1]) ||
-          (y > 0 && !bgMask[idx - w]) || (y < h - 1 && !bgMask[idx + w])) {
-        bgMask[idx] = 0;  // erode this bg pixel to person
-        // For the eroded pixel, blend toward new bg rather than keeping raw old bg
-        const factor = 0.55;  // ~halfway between old bg and new bg
-        const pi = idx * 4;
-        const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
-        pixels[pi] = clamp(Math.round(pixels[pi] * (1 - factor) + nr * factor));
-        pixels[pi+1] = clamp(Math.round(pixels[pi+1] * (1 - factor) + ng * factor));
-        pixels[pi+2] = clamp(Math.round(pixels[pi+2] * (1 - factor) + nb * factor));
-      }
+  // BFS: expand distances inward/outward, staying within same type
+  let bh = 0;
+  while (bh < bq.length) {
+    const idx = bq[bh++]; const d = sd[idx]; const isBg = bgMask[idx];
+    if (Math.abs(d) >= TRANS) continue;
+    const y = (idx/w)|0, x = idx%w;
+    for (const [nx,ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) {
+      if (nx<0||nx>=w||ny<0||ny>=h) continue;
+      const nidx = ny*w+nx;
+      if (sd[nidx]!==9999||bgMask[nidx]!==isBg) continue;
+      sd[nidx] = isBg ? d+1 : d-1; bq.push(nidx);
     }
   }
+  // Fill unvisited deep interiors
+  for (let i = 0; i < w*h; i++) if (sd[i]===9999) sd[i] = bgMask[i] ? TRANS : -TRANS;
 
-  // Phase 5: Combined replace + feather — blend first, then solid fill the rest
-  for (let i = 0; i < w * h; i++) {
-    if (!bgMask[i]) continue;  // person pixel, skip
-    const d = distance[i];
+  // --- Phase 3: Decontamination — shift each pixel by old→new bg delta ---
+  // alpha = person-ness (1=person, 0=bg). shift = 1-alpha = how much delta to apply.
+  // result = original + delta * (1-alpha)
+  const TWO_T = 2 * TRANS; const clamp = v => v<0 ? 0 : v>255 ? 255 : v;
+  for (let i = 0; i < w*h; i++) {
+    // alpha = smoothstep(-TRANS, TRANS, sd)
+    const t = (TRANS - sd[i]) / TWO_T;  // t: 0 (deep bg) … 1 (deep person)
+    const alpha = t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2*t);  // smoothstep
+    const shift = 1 - alpha;
+    if (shift < 0.002) continue;  // negligible
     const pi = i * 4;
-    const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
-    if (d > 0 && d <= feather) {
-      // In feather zone: blend original background toward new background
-      const t = d / (feather + 1);
-      const factor = Math.pow(t, 2) * 0.7;
-      pixels[pi] = clamp(Math.round(pixels[pi] * (1 - factor) + nr * factor));
-      pixels[pi+1] = clamp(Math.round(pixels[pi+1] * (1 - factor) + ng * factor));
-      pixels[pi+2] = clamp(Math.round(pixels[pi+2] * (1 - factor) + nb * factor));
-    } else {
-      // Outside feather zone: solid replace
-      pixels[pi] = nr; pixels[pi+1] = ng; pixels[pi+2] = nb;
-    }
+    pixels[pi]   = clamp(Math.round(pixels[pi]   + dR * shift));
+    pixels[pi+1] = clamp(Math.round(pixels[pi+1] + dG * shift));
+    pixels[pi+2] = clamp(Math.round(pixels[pi+2] + dB * shift));
   }
 
   srcCtx.putImageData(srcData, 0, 0);
@@ -1115,166 +1825,223 @@ function renderExif(main) {
       </div>
       <div style="margin-top:16px;" id="exifResult"></div>
     </div>`;
+
   const dropContainer = $('#exifDrop');
-  dropContainer.appendChild(createDropZone('image/*', false, async files => {
-    if (!files.length) return;
-    const file = files[0];
-    const result = $('#exifResult');
-    result.innerHTML = '<p style="font-size:13px;">解析中...</p>';
+  dropContainer.appendChild(createDropZone('image/jpeg,image/tiff', false, handleExifFile));
 
-    // Show basic file info
-    let html = `<div style="margin-bottom:16px;"><strong>文件信息</strong></div>
-      <table style="width:100%;font-size:13px;border-collapse:collapse;">
-        <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);">文件名</td><td>${file.name}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);">文件大小</td><td>${formatSize(file.size)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);">类型</td><td>${file.type || '未知'}</td></tr>
-      </table>`;
-
-    // Try to parse EXIF
-    try {
-      const buffer = await file.arrayBuffer();
-      const view = new DataView(buffer);
-      let exifOffset = -1;
-
-      // Check JPEG SOI
-      if (view.getUint16(0) !== 0xFFD8) { html += '<p style="margin-top:12px;color:var(--text-secondary);">非JPEG格式，无法解析EXIF</p>'; }
-      else {
-        // Find EXIF APP1 marker
-        let offset = 2;
-        while (offset < view.byteLength) {
-          if (view.getUint16(offset) === 0xFFE1) { exifOffset = offset + 4; break; }
-          offset += 2 + view.getUint16(offset + 2);
-        }
-        if (exifOffset < 0) { html += '<p style="margin-top:12px;color:var(--text-secondary);">未找到EXIF数据</p>'; }
-        else {
-          // Parse TIFF header
-          const tiffOffset = exifOffset;
-          const littleEndian = view.getUint16(tiffOffset) === 0x4949;
-          if (view.getUint16(tiffOffset + 2, littleEndian) !== 0x002A) {
-            html += '<p style="margin-top:12px;color:var(--text-secondary);">EXIF格式异常</p>';
-          } else {
-            const ifdOffset = tiffOffset + view.getUint32(tiffOffset + 4, littleEndian);
-            const entries = parseIFD(view, tiffOffset, ifdOffset, littleEndian, EXIF_TAGS);
-
-            if (Object.keys(entries).length) {
-              html += `<div style="margin:16px 0 8px;"><strong>EXIF 信息</strong></div><table style="width:100%;font-size:13px;border-collapse:collapse;">`;
-              for (const [key, val] of Object.entries(entries)) {
-                html += `<tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);">${key}</td><td>${formatExifVal(key, val)}</td></tr>`;
-              }
-              html += '</table>';
-
-              // Show image preview
-              const dataUrl = URL.createObjectURL(file);
-              html += `<div style="margin-top:16px;"><img src="${dataUrl}" style="max-width:100%;max-height:300px;border-radius:4px;"></div>`;
-            } else {
-              html += '<p style="margin-top:12px;color:var(--text-secondary);">EXIF数据为空</p>';
-            }
-          }
-        }
-      }
-    } catch (e) {
-      html += `<p style="margin-top:12px;color:#c62828;">解析出错: ${e.message}</p>`;
-    }
-    result.innerHTML = html;
-  }));
-  $('#exifClear').addEventListener('click', () => { $('#exifResult').innerHTML = ''; });
+  $('#exifClear').addEventListener('click', () => {
+    state.images = []; $('#exifResult').innerHTML = '';
+    dropContainer.innerHTML = '';
+    dropContainer.appendChild(createDropZone('image/jpeg,image/tiff', false, handleExifFile));
+  });
 }
 
-function parseIFD(view, base, offset, le, tagMap) {
-  const entries = {};
-  const count = view.getUint16(base + offset, le);
+async function handleExifFile(files) {
+  if (!files.length) return; const file = files[0]; state.images = [];
+  const imgData = await loadImage(file); state.images.push(imgData);
+
+  // Read file for EXIF
+  const buffer = await file.arrayBuffer();
+  const exif = parseExif(buffer);
+
+  let html = `<div style="display:flex;gap:16px;flex-wrap:wrap;">`;
+  html += `<div class="preview-card"><div class="preview-card-body"><img src="${imgData.dataUrl}" style="max-width:200px;max-height:200px;"></div></div>`;
+
+  // Basic info
+  html += `<div style="flex:1;min-width:280px;"><table style="width:100%;font-size:13px;border-collapse:collapse;">`;
+  html += `<tr style="background:#f8fafc;"><td colspan="2" style="padding:8px 12px;font-weight:700;border-bottom:1px solid var(--border);">基本信息</td></tr>`;
+  html += row('文件名', file.name);
+  html += row('文件大小', formatSize(file.size));
+  html += row('图片尺寸', `${imgData.width} × ${imgData.height}`);
+  html += row('文件类型', file.type || '未知');
+
+  if (exif) {
+    const sections = { '相机信息': {}, '拍摄参数': {}, 'GPS定位': {}, '其他': {} };
+    for (const [tag, val] of Object.entries(exif)) {
+      const tagNum = parseInt(tag);
+      if ([0x010f, 0x0110, 0x0131, 0x013b, 0x8298].includes(tagNum)) sections['相机信息'][tag] = val;
+      else if ([0x829a, 0x829d, 0x8827, 0x920a, 0x9209, 0x9204, 0x9207, 0x8822, 0xa402, 0x9201, 0x9202].includes(tagNum)) sections['拍摄参数'][tag] = val;
+      else if ([0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006].includes(tagNum)) sections['GPS定位'][tag] = val;
+      else sections['其他'][tag] = val;
+    }
+
+    for (const [section, tags] of Object.entries(sections)) {
+      if (!Object.keys(tags).length) continue;
+      html += `<tr style="background:#f8fafc;"><td colspan="2" style="padding:8px 12px;font-weight:700;border-bottom:1px solid var(--border);">${section}</td></tr>`;
+      for (const [tag, val] of Object.entries(tags)) {
+        const label = EXIF_TAGS[parseInt(tag)] || GPS_TAGS[parseInt(tag)] || `标签 0x${parseInt(tag).toString(16)}`;
+        html += row(label, val);
+      }
+    }
+  }
+  html += `</table></div></div>`;
+
+  $('#exifResult').innerHTML = html;
+}
+
+function row(label, value) {
+  return `<tr><td style="padding:6px 12px;color:var(--text-secondary);white-space:nowrap;">${label}</td><td style="padding:6px 12px;font-weight:500;">${value || '-'}</td></tr>`;
+}
+
+function parseExif(buffer) {
+  const dv = new DataView(buffer);
+  if (dv.getUint16(0) !== 0xFFD8) return null;
+
+  let offset = 2;
+  while (offset < dv.byteLength - 4) {
+    const marker = dv.getUint16(offset);
+    if (marker === 0xFFE1) {
+      const segLen = dv.getUint16(offset + 2);
+      if (offset + 4 + 6 > dv.byteLength) break;
+      const header = String.fromCharCode(dv.getUint8(offset+4), dv.getUint8(offset+5), dv.getUint8(offset+6), dv.getUint8(offset+7), dv.getUint8(offset+8), dv.getUint8(offset+9));
+      if (header === 'Exif\x00\x00') {
+        const tiffStart = offset + 10;
+        return parseTiff(dv, tiffStart);
+      }
+    }
+    if (marker >= 0xFFE0 && marker <= 0xFFEF) {
+      offset += 2 + dv.getUint16(offset + 2);
+    } else if (marker === 0xFFD8 || marker === 0xFFD9) {
+      offset += 2;
+    } else {
+      break;
+    }
+  }
+  return null;
+}
+
+function parseTiff(dv, start) {
+  const le = dv.getUint16(start) === 0x4949;
+  const readU16 = (o) => dv.getUint16(o, le);
+  const readU32 = (o) => dv.getUint32(o, le);
+
+  if (readU16(start + 2) !== 0x002A) return null;
+  const ifd0 = readU32(start + 4);
+  if (ifd0 < 8) return null;
+
+  const result = {};
+  const ifdPos = start + ifd0;
+  parseIFD(dv, ifdPos, le, start, result);
+
+  // Parse sub-IFDs
+  if (result[0x8769]) parseIFD(dv, start + parseInt(result[0x8769]), le, start, result);
+  if (result[0x8825]) parseGPS(dv, start + parseInt(result[0x8825]), le, start, result);
+
+  return result;
+}
+
+function parseIFD(dv, offset, le, tiffStart, result) {
+  const readU16 = (o) => dv.getUint16(o, le);
+  const readU32 = (o) => dv.getUint32(o, le);
+  const count = readU16(offset);
+  if (count > 256) return;
+
   for (let i = 0; i < count; i++) {
-    const entryOffset = base + offset + 2 + i * 12;
-    const tag = view.getUint16(entryOffset, le);
-    const type = view.getUint16(entryOffset + 2, le);
-    const num = view.getUint32(entryOffset + 4, le);
-    const valOffset = entryOffset + 8;
-    if (tagMap[tag]) {
-      let val;
-      const typeSizes = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
-      const dataSize = typeSizes[type] * num;
-      if (dataSize <= 4) {
-        val = readValue(view, valOffset, type, num, le);
+    const entry = offset + 2 + i * 12;
+    const tag = readU16(entry);
+    const type = readU16(entry + 2);
+    const num = readU32(entry + 4);
+    const valOff = entry + 8;
+
+    let value = '';
+    const typeSizes = { 1:1, 2:1, 3:2, 4:4, 5:8, 7:1, 9:4, 10:8 };
+    const dataSize = (typeSizes[type] || 1) * num;
+
+    if (dataSize <= 4) {
+      // Value inline
+      if (type === 2) { // ASCII
+        value = String.fromCharCode(...new Uint8Array(dv.buffer, valOff, num > 0 ? num - 1 : 0));
+      } else if (type === 3) { // SHORT
+        value = String(readU16(valOff));
+      } else if (type === 4 || type === 9) { // LONG / SLONG
+        value = String(readU32(valOff));
       } else {
-        const dataOffset = base + view.getUint32(valOffset, le);
-        val = readValue(view, dataOffset, type, num, le);
+        const bytes = [dv.getUint8(valOff), dv.getUint8(valOff+1), dv.getUint8(valOff+2), dv.getUint8(valOff+3)];
+        value = bytes.map(b => b.toString(16).padStart(2,'0')).join(' ');
       }
-      entries[tagMap[tag]] = val;
-    }
-  }
+    } else {
+      const dataOff = tiffStart + readU32(valOff);
+      if (dataOff + dataSize > dv.byteLength) continue;
 
-  // Check for sub-IFD (Exif sub)
-  if (entries['Exif子信息'] && typeof entries['Exif子信息'] === 'number') {
-    const subEntries = parseIFD(view, base, entries['Exif子信息'], le, EXIF_TAGS);
-    Object.assign(entries, subEntries);
-  }
-  // Check for GPS sub-IFD
-  if (entries['GPS信息'] && typeof entries['GPS信息'] === 'number') {
-    const gpsEntries = parseIFD(view, base, entries['GPS信息'], le, GPS_TAGS);
-    for (const [k, v] of Object.entries(gpsEntries)) {
-      entries[`GPS: ${k}`] = v;
+      if (type === 2) { // ASCII string
+        value = String.fromCharCode(...new Uint8Array(dv.buffer, dataOff, num > 0 ? num - 1 : 0));
+      } else if (type === 5 || type === 10) { // RATIONAL
+        const numVal = readU32(dataOff);
+        const denVal = readU32(dataOff + 4);
+        if (denVal !== 0) value = (numVal / denVal).toFixed(4);
+        else value = String(numVal);
+      } else {
+        value = '二进制数据';
+      }
+    }
+
+    if (value) {
+      // Format known values
+      if (tag === 0x829a && !isNaN(parseFloat(value))) { // ExposureTime
+        const v = parseFloat(value);
+        value = v < 1 ? `1/${Math.round(1/v)} 秒` : `${v} 秒`;
+      } else if (tag === 0x829d) { // FNumber
+        value = `f/${parseFloat(value).toFixed(1)}`;
+      } else if (tag === 0x920a) { // FocalLength
+        value = `${parseFloat(value).toFixed(0)}mm`;
+      } else if (tag === 0x8827) { // ISO
+        value = `ISO ${value}`;
+      } else if (tag === 0x9209) { // Flash
+        const fv = parseInt(value);
+        value = fv & 1 ? '闪光灯开启' : '未使用闪光灯';
+      } else if (tag === 0x9204) { // ExposureBias
+        const eb = parseFloat(value);
+        value = `${eb > 0 ? '+' : ''}${eb} EV`;
+      } else if (tag === 0x9207) { // MeteringMode
+        const modes = {0:'未知',1:'平均',2:'中央重点',3:'点测光',4:'多点',5:'矩阵',6:'局部',255:'其他'};
+        value = modes[parseInt(value)] || value;
+      }
+      result[tag] = value;
     }
   }
-  return entries;
 }
 
-function readValue(view, offset, type, count, le) {
-  if (type === 2) {
-    // ASCII string
-    const end = offset + count - 1;
-    let str = '';
-    for (let i = offset; i < end; i++) str += String.fromCharCode(view.getUint8(i));
-    return str.replace(/\0/g, '');
-  }
-  if (count === 1) {
-    switch (type) {
-      case 1: return view.getUint8(offset);
-      case 3: return view.getUint16(offset, le);
-      case 4: return view.getUint32(offset, le);
-      case 5: return view.getUint32(offset, le) / view.getUint32(offset + 4, le);
-      case 10: return view.getInt32(offset, le) / view.getInt32(offset + 4, le);
-      default: return view.getUint32(offset, le);
-    }
-  }
-  // Array
-  const arr = [];
+function parseGPS(dv, offset, le, tiffStart, result) {
+  const readU16 = (o) => dv.getUint16(o, le);
+  const readU32 = (o) => dv.getUint32(o, le);
+  const count = readU16(offset);
+  if (count > 256) return;
+
+  let lat = null, lon = null, latRef = 'N', lonRef = 'E';
+
   for (let i = 0; i < count; i++) {
-    switch (type) {
-      case 5: arr.push(view.getUint32(offset + i * 8, le) / view.getUint32(offset + i * 8 + 4, le)); break;
-      case 10: arr.push(view.getInt32(offset + i * 8, le) / view.getInt32(offset + i * 8 + 4, le)); break;
-      default: arr.push(view.getUint16(offset + i * 2, le));
+    const entry = offset + 2 + i * 12;
+    const tag = readU16(entry);
+    const type = readU16(entry + 2);
+    const num = readU32(entry + 4);
+    const valOff = entry + 8;
+
+    if (type === 5 && num === 3) {
+      const dataOff = tiffStart + readU32(valOff);
+      const deg = readU32(dataOff) / readU32(dataOff + 4);
+      const min = readU32(dataOff + 8) / readU32(dataOff + 12);
+      const sec = readU32(dataOff + 16) / readU32(dataOff + 20);
+      const coord = deg + min / 60 + sec / 3600;
+      if (tag === 0x0002) lat = coord;
+      if (tag === 0x0004) lon = coord;
+    } else if (type === 2 && num <= 4) {
+      let str = '';
+      if (num <= 4) {
+        for (let j = 0; j < num - 1; j++) str += String.fromCharCode(dv.getUint8(valOff + j));
+      } else {
+        const off = tiffStart + readU32(valOff);
+        for (let j = 0; j < num - 1; j++) str += String.fromCharCode(dv.getUint8(off + j));
+      }
+      if (tag === 0x0001) latRef = str;
+      if (tag === 0x0003) lonRef = str;
     }
   }
-  return arr;
-}
 
-function formatExifVal(tag, val) {
-  if (tag === '曝光时间' && typeof val === 'number') return val < 1 ? `1/${Math.round(1/val)} 秒` : `${val.toFixed(2)} 秒`;
-  if (tag === '光圈值' && typeof val === 'number') return `f/${val.toFixed(1)}`;
-  if (tag === '焦距' && typeof val === 'number') return `${val.toFixed(0)} mm`;
-  if (tag === 'ISO感光度') return `${val}`;
-  if (tag === '闪光灯') return val === 0 ? '未闪光' : val === 1 ? '闪光' : val;
-  if (tag === '曝光模式') return ['', '手动', '程序自动', '光圈优先', '快门优先'][val] || val;
-  if (tag === '测光模式') return ['', '平均', '中央重点', '点测', '多区'][val] || val;
-  if (tag === '方向') return ['', '正常', '镜像', '旋转180', '旋转180镜像', '旋转90镜像', '旋转270', '旋转270镜像', '旋转90'][val] || val;
-  if (tag.startsWith('GPS: 纬度') && Array.isArray(val)) return `${val[0]}° ${val[1]}' ${val[2].toFixed(1)}"`;
-  if (tag.startsWith('GPS: 经度') && Array.isArray(val)) return `${val[0]}° ${val[1]}' ${val[2].toFixed(1)}"`;
-  if (typeof val === 'number' && (tag.includes('时间') || tag.includes('修改'))) {
-    return formatExifDate(val);
-  }
-  return typeof val === 'object' ? JSON.stringify(val) : String(val);
+  if (lat !== null) result[0x0002] = `${lat.toFixed(6)}° ${latRef}`;
+  if (lon !== null) result[0x0004] = `${lon.toFixed(6)}° ${lonRef}`;
 }
-
-function formatExifDate(str) {
-  if (typeof str === 'string' && str.length >= 19) {
-    return str.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
-  }
-  return str;
-}
-
-// ========== INIT ==========
-renderTabs();
-renderTool('watermark');
+// ===== Init =====
+renderTool();
 </script>
 </body>
 </html>
